@@ -2,7 +2,7 @@
 
 const $ = (id) => document.getElementById(id);
 
-const views = ["view-auth", "view-idle", "view-scanning", "view-suggestion", "view-restored"];
+const views = ["view-auth", "view-idle", "view-scanning", "view-restoring", "view-suggestion", "view-restored"];
 
 function show(viewId) {
   for (const v of views) $(v).classList.toggle("hidden", v !== viewId);
@@ -109,7 +109,7 @@ function renderModes(modes) {
 
       right.append(count, delBtn);
       li.append(left, right);
-      li.addEventListener("click", () => activateMode(m.id));
+      li.addEventListener("click", () => activateMode(m.id, m.name));
       return li;
     }),
   );
@@ -391,14 +391,64 @@ async function saveTabsAsMode() {
   }
 }
 
-async function activateMode(modeId) {
+let isActivating = false;
+
+async function activateMode(modeId, modeName = "Mode") {
+  if (isActivating) return;
+  isActivating = true;
+
+  const targetLi = document.getElementById(`mode-${modeId}`) || document.querySelector(`li[data-mode-id="${modeId}"]`);
+  const modesList = $("modes-list");
+  let iconEl = null;
+  let countEl = null;
+  let origIcon = "◌";
+  let origCount = "";
+
+  if (modesList) modesList.classList.add("busy");
+  if (targetLi) {
+    targetLi.classList.add("restoring");
+    iconEl = targetLi.querySelector(".m-icon");
+    countEl = targetLi.querySelector(".m-count");
+    if (iconEl) {
+      origIcon = iconEl.textContent;
+      iconEl.innerHTML = `<span class="btn-spinner"></span>`;
+    }
+    if (countEl) {
+      origCount = countEl.textContent;
+      countEl.textContent = "Opening…";
+    }
+  }
+
+  const restoringText = $("restoring-text");
+  if (restoringText) {
+    restoringText.textContent = `Opening “${modeName}” tabs…`;
+  }
+  show("view-restoring");
+  setStatus(`Opening “${modeName}”…`);
+
   try {
     const data = await send({ type: "ACTIVATE_MODE", modeId });
     const opened = data.opened?.length ?? 0;
-    $("restored-text").textContent = `Restored ${opened} resources.`;
+    $("restored-text").textContent = `Restored ${opened} resources for “${modeName}”.`;
     show("view-restored");
-  } catch {
-    setStatus("Restore failed");
+    setStatus("✓ Workspace restored");
+
+    setTimeout(async () => {
+      show("view-idle");
+      setStatus("");
+      renderModes(await loadModes());
+    }, 2200);
+  } catch (err) {
+    setStatus(`Restore failed: ${err.message}`);
+    show("view-idle");
+  } finally {
+    isActivating = false;
+    if (modesList) modesList.classList.remove("busy");
+    if (targetLi) {
+      targetLi.classList.remove("restoring");
+      if (iconEl) iconEl.textContent = origIcon;
+      if (countEl) countEl.textContent = origCount;
+    }
   }
 }
 

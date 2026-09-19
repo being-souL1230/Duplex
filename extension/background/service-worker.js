@@ -262,30 +262,16 @@ async function runDetection(isManual = false) {
  */
 async function openTabsSequentially(opened) {
   const results = [];
-  const existingTabs = await B.getTabs().catch(() => []);
-  const existingUrls = new Set(
-    existingTabs
-      .map((t) => t.url)
-      .filter(Boolean)
-      .map((u) => u.replace(/\/$/, "").toLowerCase())
-  );
-
   for (let i = 0; i < opened.length; i += 1) {
     const rawUrl = opened[i]?.url || (typeof opened[i] === "string" ? opened[i] : null);
     if (!rawUrl) {
       warnOnce("mode link without url skipped during restore");
       continue;
     }
-    const normalized = rawUrl.replace(/\/$/, "").toLowerCase();
-    if (existingUrls.has(normalized)) {
-      results.push(rawUrl);
-      continue;
-    }
-    if (results.length > 0) await new Promise((resolve) => setTimeout(resolve, 25));
+    if (i > 0) await new Promise((resolve) => setTimeout(resolve, 35));
     try {
-      await B.createTab(rawUrl, results.length === 0);
+      await B.createTab(rawUrl, i === 0);
       results.push(rawUrl);
-      existingUrls.add(normalized);
     } catch (err) {
       warnOnce(`could not open tab ${rawUrl}`, err?.message);
     }

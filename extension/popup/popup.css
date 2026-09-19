@@ -218,6 +218,20 @@ header {
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+.modes-list.busy {
+  pointer-events: none;
+}
+
+.modes-list li.restoring {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(255, 255, 255, 0.4) !important;
+  cursor: wait;
+}
+
+.modes-list li.restoring .m-count {
+  color: #fff !important;
+}
+
 .modes-list li.deleting {
   opacity: 0.35 !important;
   pointer-events: none !important;

@@ -81,8 +81,12 @@ export const ChromeAdapter = {
   },
 
   async createTab(url, active) {
-    const win = await chrome.windows.getLastFocused();
-    await chrome.tabs.create({ windowId: win?.id, url, active });
+    const win = await chrome.windows.getLastFocused().catch(() => null);
+    if (win?.id) {
+      await chrome.tabs.create({ windowId: win.id, url, active });
+    } else {
+      await chrome.tabs.create({ url, active });
+    }
   },
 
   /**
