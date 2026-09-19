@@ -4,8 +4,6 @@ Context switching solution for modern knowledge workers. Browsers restore tabs, 
 
 Duplex is a web platform and browser extension engineered around named Work Modes and an Automatic Context Detection Engine. A Work Mode represents a distinct, coherent task (such as a college project, freelance client engagement, or exam preparation) along with its curated resources. The detection engine observes lightweight browser signals, determines which task context you are operating in, and presents a single-click action to restore your intended workspace.
 
-Built for Hack Devengers 2.0 (Open Innovation Track).
-
 ---
 
 ## Table of Contents
@@ -424,5 +422,3 @@ To experience the full Duplex workflow in under 3 minutes:
 8. Session Metrics: Navigate to Sessions (`/dashboard/sessions`) to inspect real focus duration logs and context switch indicators.
 
 ---
-
-Duplex is developed by Team Hack Devengers for Hack Devengers 2.0.
