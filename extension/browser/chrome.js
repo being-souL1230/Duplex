@@ -4,6 +4,7 @@
  */
 
 import { WEB_APP_URL } from "../core/constants.js";
+import { badgeVisual } from "../core/badgeStates.js";
 
 const META_KEY = "dx_tab_meta";
 let tabMeta = null;
@@ -69,9 +70,15 @@ export const ChromeAdapter = {
     await chrome.tabs.create({ windowId: win?.id, url, active });
   },
 
-  async setBadge(hasSuggestion) {
-    await chrome.action.setBadgeText({ text: hasSuggestion ? "●" : "" });
-    await chrome.action.setBadgeBackgroundColor({ color: "#ffffff" });
+  /**
+   * @param {boolean|'paused'} state true = suggestion, 'paused' = auto-detect
+   *   backing off, false = nothing
+   */
+  async setBadge(state) {
+    const v = badgeVisual(state === "paused" ? "PAUSED" : state ? "SUGGESTION" : "OFF");
+    await chrome.action.setBadgeText({ text: v.text });
+    await chrome.action.setBadgeBackgroundColor({ color: v.color });
+    await chrome.action.setTitle({ title: v.title });
   },
 
   async isLoggedIn() {

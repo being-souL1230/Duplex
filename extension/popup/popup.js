@@ -103,6 +103,10 @@ async function refreshState() {
     }
 
     $("tab-count").textContent = `${state.tabCount} tabs`;
+    if (state.backoffMs > 0) {
+      const seconds = Math.max(1, Math.round(state.backoffMs / 1000));
+      setStatus(`Auto-detect paused ${seconds}s - web app unreachable. Manual detection still works.`);
+    }
     renderModes(await loadModes());
 
     if (state.suggestion) {

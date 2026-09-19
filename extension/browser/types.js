@@ -36,7 +36,8 @@
  * @property {(tabId: number) => Promise<void>} forgetTab
  *            drop tab state when a tab closes
  * @property {(url: string, active: boolean) => Promise<void>} createTab
- * @property {(id: number|null, hasSuggestion: boolean) => Promise<void>} setBadge
+ * @property {(state: boolean|"paused") => Promise<void>} setBadge
+ *            true = suggestion, "paused" = auto-detect backing off
  * @property {() => Promise<boolean>} isLoggedIn
  * @property {(ms: number, cb: () => void) => void} scheduleDebounced
  * @property {(minutes: number, cb: () => void) => void} schedulePeriodicAlarm

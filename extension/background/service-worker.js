@@ -7,6 +7,8 @@
  *  - Transient detect failures (network down, 5xx) retry in-place with
  *    linear backoff, then park auto-detection in a persisted backoff so
  *    a dead server never gets hammered every 12s.
+ *  - A parked auto-detect is VISIBLE: the toolbar badge shows "zZ"
+ *    until the next successful detect (see core/badgeStates.js).
  *  - Non-transient failures (401, 400/404) never retry.
  *  - Every warning is logged once per SW lifetime: MV3 restarts the SW
  *    constantly, and repeating identical warnings is pure noise.
@@ -16,6 +18,7 @@
  */
 
 import { getBrowser } from "../browser/index.js";
+import { BADGE } from "../core/badgeStates.js";
 import {
   ApiError,
   detect,
@@ -38,6 +41,7 @@ import {
   recordDetectFailure,
   clearDetectBackoff,
   getDetectBackoffRemaining,
+  setLastBadgeState,
   DEBOUNCE_MS,
 } from "../core/store.js";
 
@@ -71,14 +75,45 @@ function warnOnce(message, ...details) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Badge                                                               */
+/* Badge - suggestion > paused > off, persisted across SW restarts      */
 /* ------------------------------------------------------------------ */
 
-async function setBadge(hasSuggestion) {
+function badgeStateName(state) {
+  if (state === true || state === BADGE.SUGGESTION) return "suggestion";
+  if (state === "paused" || state === BADGE.PAUSED) return "paused";
+  return "off";
+}
+
+/**
+ * Push a badge state to the browser and remember it in storage, so a
+ * freshly restarted service worker can re-apply the same visual.
+ * @param {true|false|"paused"} state
+ */
+async function setBadge(state) {
   try {
-    await B.setBadge(hasSuggestion);
-  } catch {
+    await B.setBadge(state);
+    await setLastBadgeState(badgeStateName(state));
+  } catch (err) {
     /* badge is cosmetic - never let it break detection */
+    console.debug("[Duplex] badge update skipped:", err?.message);
+  }
+}
+
+/**
+ * Recompute the badge from persisted state. Runs on install/startup
+ * because MV3 does not keep the badge across service-worker deaths.
+ * Priority: suggestion > paused > off.
+ */
+async function refreshBadgeFromState() {
+  try {
+    const [suggestion, backoffMs] = await Promise.all([
+      getSuggestion(),
+      getDetectBackoffRemaining(),
+    ]);
+    const state = suggestion ? true : backoffMs > 0 ? "paused" : false;
+    await setBadge(state);
+  } catch (err) {
+    console.debug("[Duplex] badge refresh skipped:", err?.message);
   }
 }
 
@@ -151,7 +186,13 @@ async function resetObservationState() {
   await setBadge(false);
 }
 
-async function runDetection({ notifyBadge = true } = {}) {
+/**
+ * Run one detection cycle. The badge ALWAYS reflects the outcome
+ * (suggestion / paused / off) regardless of who triggered the run -
+ * a manual popup run that finds a suggestion must still light the dot,
+ * and a manual run that fails must still show the paused state.
+ */
+async function runDetection() {
   if (!(await B.isLoggedIn())) return null;
 
   const tabs = await B.getTabs();
@@ -165,6 +206,9 @@ async function runDetection({ notifyBadge = true } = {}) {
   } catch (err) {
     if (err?.code === "AUTH_REQUIRED") throw err;
     await noteAutoDetectFailure(err);
+    /* Show the parked state even when the popup triggered the run -
+     * it is a status change, not a cosmetic notification. */
+    await setBadge("paused");
     throw err;
   }
 
@@ -173,13 +217,13 @@ async function runDetection({ notifyBadge = true } = {}) {
 
   if (data.disabled || !data.result?.candidate) {
     await resetObservationState();
-    if (notifyBadge) await setBadge(false);
     return data;
   }
 
   const candidate = data.result.candidate;
   if (candidate.confidence === "low") {
-    /* Doc: low -> keep observing, no UI. */
+    /* Doc: low -> keep observing, no UI. Stale badges still clear. */
+    await setBadge(false);
     return data;
   }
 
@@ -195,7 +239,7 @@ async function runDetection({ notifyBadge = true } = {}) {
     modeId: candidate.modeId,
     switchWarning: data.result.switchWarning,
   });
-  if (notifyBadge) await setBadge(true);
+  await setBadge(true);
   return data;
 }
 
@@ -286,13 +330,16 @@ chrome.alarms.onAlarm.addListener((alarm) => {
   if (alarm.name === END_PING_ALARM) reconcileSession();
 });
 
-/* Alarms persist across service-worker restarts; create if missing. */
+/* Alarms persist across service-worker restarts; create if missing.
+ * The badge does NOT persist visually - recompute it from storage. */
 B.onInstalled(() => {
   B.schedulePeriodicAlarm(END_PING_ALARM, 10);
+  refreshBadgeFromState();
 });
 B.onStartup(() => {
   B.schedulePeriodicAlarm(END_PING_ALARM, 10);
   reconcileSession();
+  refreshBadgeFromState();
 });
 
 /* ------------------------------------------------------------------ */
@@ -304,8 +351,9 @@ function scheduleAutoDetect() {
     if (!(await shouldAutoDetect())) return;
     try {
       await runDetection();
-    } catch (err) {
-      /* Failure (and its backoff) was already recorded in runDetection. */
+    } catch {
+      /* Failure (backoff + zZ badge) was already recorded in runDetection. */
+      console.debug("[Duplex] auto-detect skipped after failure (backoff active)");
     }
   }, DEBOUNCE_MS);
 }
@@ -346,13 +394,23 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 async function handleMessage(message = {}) {
   switch (message.type) {
     case "GET_STATE": {
-      const [loggedIn, suggestion] = await Promise.all([B.isLoggedIn(), getSuggestion()]);
+      const [loggedIn, suggestion, backoffMs] = await Promise.all([
+        B.isLoggedIn(),
+        getSuggestion(),
+        getDetectBackoffRemaining(),
+      ]);
       const tabs = loggedIn ? await B.getTabs() : [];
-      return { loggedIn, suggestion, tabCount: tabs.length, debounceMs: DEBOUNCE_MS };
+      return {
+        loggedIn,
+        suggestion,
+        tabCount: tabs.length,
+        debounceMs: DEBOUNCE_MS,
+        backoffMs,
+      };
     }
 
     case "DETECT_NOW": {
-      const data = await runDetection({ notifyBadge: false });
+      const data = await runDetection();
       const suggestion = await getSuggestion();
       return {
         result: data?.result ?? null,

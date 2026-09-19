@@ -11,6 +11,7 @@
  */
 
 import { WEB_APP_URL } from "../core/constants.js";
+import { badgeVisual } from "../core/badgeStates.js";
 
 const META_KEY = "dx_tab_meta";
 let tabMeta = null;
@@ -79,9 +80,15 @@ export const FirefoxAdapter = {
     await api.tabs.create({ windowId: win?.id, url, active });
   },
 
-  async setBadge(hasSuggestion) {
-    await api.action.setBadgeText({ text: hasSuggestion ? "●" : "" });
-    await api.action.setBadgeBackgroundColor({ color: "#ffffff" });
+  /**
+   * @param {boolean|'paused'} state true = suggestion, 'paused' = auto-detect
+   *   backing off, false = nothing
+   */
+  async setBadge(state) {
+    const v = badgeVisual(state === "paused" ? "PAUSED" : state ? "SUGGESTION" : "OFF", true);
+    await api.action.setBadgeText({ text: v.text });
+    await api.action.setBadgeBackgroundColor({ color: v.color });
+    await api.action.setTitle({ title: v.title });
   },
 
   async isLoggedIn() {

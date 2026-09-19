@@ -8,6 +8,7 @@ const BUFFER_KEY = "dx_signal_buffer";
 const SUGGESTION_KEY = "dx_last_suggestion";
 const LIVE_SESSION_KEY = "dx_live_session_id";
 const BACKOFF_KEY = "dx_detect_backoff";
+const BADGE_KEY = "dx_last_badge";
 
 const area = (globalThis.browser ?? globalThis.chrome).storage.local;
 
@@ -90,4 +91,19 @@ export async function getDetectBackoffRemaining() {
   const { [BACKOFF_KEY]: backoff } = await area.get(BACKOFF_KEY);
   if (!backoff?.delayMs) return 0;
   return Math.max(0, backoff.delayMs - (Date.now() - backoff.at));
+}
+
+/* ------------------------------------------------------------------ */
+/* Last badge state - lets a restarted service worker re-apply the      */
+/* visual (MV3 does not keep the badge across SW deaths).               */
+/* ------------------------------------------------------------------ */
+
+export async function setLastBadgeState(name) {
+  if (name) await area.set({ [BADGE_KEY]: name });
+  else await area.remove(BADGE_KEY);
+}
+
+export async function getLastBadgeState() {
+  const { [BADGE_KEY]: value } = await area.get(BADGE_KEY);
+  return value ?? null;
 }

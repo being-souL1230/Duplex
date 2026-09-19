@@ -24,6 +24,7 @@ const SHARED = [
   "core/api.js",
   "core/store.js",
   "core/constants.js",
+  "core/badgeStates.js",
   "popup/popup.html",
   "popup/popup.css",
   "popup/popup.js",
