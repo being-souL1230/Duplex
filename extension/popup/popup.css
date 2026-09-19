@@ -211,11 +211,31 @@ header {
   border: 1px solid rgba(255, 255, 255, 0.09);
   border-radius: 9px;
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, opacity 0.2s ease, transform 0.2s ease;
 }
 
 .modes-list li:hover {
   border-color: rgba(255, 255, 255, 0.3);
+}
+
+.modes-list li.deleting {
+  opacity: 0.35 !important;
+  pointer-events: none !important;
+  transform: scale(0.98);
+  border-color: rgba(225, 29, 72, 0.3) !important;
+}
+
+.modes-list li.empty-modes-item {
+  color: rgba(255, 255, 255, 0.35);
+  font-size: 11px;
+  justify-content: center;
+  border-style: dashed;
+  cursor: default;
+  padding: 10px;
+}
+
+.modes-list li.empty-modes-item:hover {
+  border-color: rgba(255, 255, 255, 0.09);
 }
 
 .modes-list .m-count {
@@ -289,6 +309,28 @@ header {
 
 .btn-solid:hover {
   background: rgba(255, 255, 255, 0.85);
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.btn-spinner {
+  width: 11px;
+  height: 11px;
+  border: 1.5px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.6s linear infinite;
+  display: inline-block;
+  margin-right: 5px;
+  vertical-align: -1px;
+}
+
+.btn-solid .btn-spinner {
+  border-color: rgba(0, 0, 0, 0.25);
+  border-top-color: #000;
 }
 
 .actions {

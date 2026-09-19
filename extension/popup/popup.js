@@ -41,7 +41,7 @@ function renderSuggestion(s) {
   const nameInput = $("sug-name");
   nameInput.value = s.label || "";
 
-  $("btn-accept").textContent = s.kind === "discovery" ? "Create Mode" : "Switch to Mode";
+  $("btn-accept").textContent = s.kind === "discovery" ? "Save Mode" : "Switch to Mode";
 
   const reasons = $("sug-reasons");
   reasons.replaceChildren(
@@ -77,6 +77,8 @@ function renderModes(modes) {
     ...modes.map((m) => {
       const li = document.createElement("li");
       li.className = "mode-item";
+      li.id = `mode-${m.id}`;
+      li.setAttribute("data-mode-id", m.id);
 
       const left = document.createElement("div");
       left.className = "mode-item-left";
@@ -233,21 +235,77 @@ async function runDetection() {
 }
 
 async function deleteModeById(modeId) {
+  const confirmDelBtn = $("btn-confirm-delete");
+  const confirmCancelBtn = $("btn-confirm-cancel");
+  const targetLi = document.getElementById(`mode-${modeId}`) || document.querySelector(`li[data-mode-id="${modeId}"]`);
+
+  if (confirmDelBtn) {
+    confirmDelBtn.disabled = true;
+    confirmDelBtn.innerHTML = `<span class="btn-spinner"></span> Deleting…`;
+  }
+  if (confirmCancelBtn) {
+    confirmCancelBtn.disabled = true;
+  }
+  if (targetLi) {
+    targetLi.classList.add("deleting");
+  }
+  setStatus("Deleting mode…");
+
   try {
-    setStatus("Deleting mode…");
     await send({ type: "DELETE_MODE", modeId });
-    setStatus("Mode deleted");
-    renderModes(await loadModes());
-    setTimeout(() => setStatus(""), 2000);
+
+    // Close confirmation modal
+    hideDeleteConfirm();
+
+    // Smoothly animate & remove the item from DOM immediately
+    if (targetLi) {
+      targetLi.style.transition = "all 0.2s ease";
+      targetLi.style.opacity = "0";
+      targetLi.style.transform = "translateX(8px)";
+      setTimeout(() => {
+        targetLi.remove();
+        const remaining = $("modes-list")?.querySelectorAll("li.mode-item") ?? [];
+        if (remaining.length === 0) {
+          renderModes([]);
+        }
+      }, 200);
+    }
+
+    setStatus("✓ Mode deleted");
+    setTimeout(() => setStatus(""), 2500);
+
+    // Silently re-sync with server in background
+    loadModes().then(renderModes).catch(() => {});
   } catch (err) {
+    hideDeleteConfirm();
+    if (targetLi) {
+      targetLi.classList.remove("deleting");
+    }
     setStatus(`Could not delete mode: ${err.message}`);
+  } finally {
+    if (confirmDelBtn) {
+      confirmDelBtn.disabled = false;
+      confirmDelBtn.textContent = "Delete";
+    }
+    if (confirmCancelBtn) {
+      confirmCancelBtn.disabled = false;
+    }
   }
 }
 
 async function acceptSuggestion() {
   const nameInput = $("sug-name");
   const name = nameInput.value.trim() || currentSuggestion?.label || "New Context";
-  $("btn-accept").disabled = true;
+  const btn = $("btn-accept");
+  const btnIgnore = $("btn-ignore");
+  const originalText = btn.textContent;
+  const isDiscovery = currentSuggestion?.kind === "discovery";
+
+  btn.disabled = true;
+  btnIgnore.disabled = true;
+  btn.innerHTML = `<span class="btn-spinner"></span> ${isDiscovery ? "Saving…" : "Switching…"}`;
+  setStatus(isDiscovery ? "Saving mode…" : "Switching mode…");
+
   try {
     const data = await send({
       type: "ACCEPT",
@@ -255,31 +313,51 @@ async function acceptSuggestion() {
       kind: currentSuggestion?.kind,
       label: name,
     });
-    const opened = data.opened?.length ?? 0;
-    $("restored-text").textContent =
-      data.label != null
-        ? `Switched to ${data.label} — ${opened} resources opened.`
-        : `Workspace rebuilt — ${opened} resources opened.`;
-    show("view-restored");
+
     clearCurrentSuggestion();
     renderModes(await loadModes());
+
+    if (data.created) {
+      // Saved newly discovered cluster from open tabs!
+      // Do NOT show restored view or say resources opened. Stay in idle view with confirmation.
+      setStatus(`✓ Mode "${data.label || name}" saved`);
+      show("view-idle");
+      setTimeout(() => setStatus(""), 3000);
+    } else {
+      const opened = data.opened?.length ?? 0;
+      $("restored-text").textContent =
+        data.label != null
+          ? `Switched to ${data.label} — ${opened} resources opened.`
+          : `Workspace rebuilt — ${opened} resources opened.`;
+      show("view-restored");
+      setStatus("");
+    }
   } catch (err) {
+    btn.disabled = false;
+    btnIgnore.disabled = false;
+    btn.textContent = originalText;
     if (err.message === "NO_MODE") setStatus("No mode to switch to");
     else if (err.message === "NETWORK" || err.message === "SERVER") {
       setStatus("Web app not reachable — try again in a moment");
-    } else setStatus(`Could not switch: ${err.message}`);
+    } else setStatus(`Could not save: ${err.message}`);
+    return;
   }
-  $("btn-accept").disabled = false;
+  btn.disabled = false;
+  btnIgnore.disabled = false;
+  btn.textContent = originalText;
 }
 
 async function ignoreSuggestion() {
-  try {
-    await send({ type: "IGNORE", eventId: currentSuggestion?.eventId });
-    clearCurrentSuggestion();
-    setStatus("Suggestion ignored");
-    show("view-idle");
-  } catch {
-    setStatus("Could not ignore suggestion");
+  const eventId = currentSuggestion?.eventId;
+  // Instant optimistic update: hide suggestion and return to idle immediately
+  clearCurrentSuggestion();
+  setStatus("Suggestion dismissed");
+  show("view-idle");
+  setTimeout(() => setStatus(""), 2000);
+
+  // Inform background in parallel without blocking UI
+  if (eventId) {
+    send({ type: "IGNORE", eventId }).catch(() => {});
   }
 }
 
@@ -291,7 +369,12 @@ async function saveTabsAsMode() {
     nameInput.focus();
     return;
   }
-  $("btn-save-tabs").disabled = true;
+  const btn = $("btn-save-tabs");
+  const originalText = btn.textContent;
+  btn.disabled = true;
+  btn.innerHTML = `<span class="btn-spinner"></span> Saving…`;
+  setStatus("Saving current tabs…");
+
   try {
     const data = await send({ type: "SAVE_TABS", name });
     nameInput.value = "";
@@ -303,7 +386,8 @@ async function saveTabsAsMode() {
     else if (err.message === "NO_TABS") setStatus("No tabs to save");
     else setStatus(`Could not save mode: ${err.message}`);
   } finally {
-    $("btn-save-tabs").disabled = false;
+    btn.disabled = false;
+    btn.textContent = originalText;
   }
 }
 
@@ -352,11 +436,9 @@ document.addEventListener("DOMContentLoaded", () => {
   $("btn-save-tabs").addEventListener("click", saveTabsAsMode);
   $("save-name").addEventListener("keydown", (e) => e.key === "Enter" && saveTabsAsMode());
 
-  $("btn-confirm-delete").addEventListener("click", async () => {
+  $("btn-confirm-delete").addEventListener("click", () => {
     if (pendingDeleteModeId) {
-      const id = pendingDeleteModeId;
-      hideDeleteConfirm();
-      await deleteModeById(id);
+      deleteModeById(pendingDeleteModeId);
     }
   });
 
@@ -367,6 +449,16 @@ document.addEventListener("DOMContentLoaded", () => {
   $("modal-confirm").addEventListener("click", (e) => {
     if (e.target.id === "modal-confirm") {
       hideDeleteConfirm();
+    }
+  });
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && !$("modal-confirm").classList.contains("hidden")) {
+      hideDeleteConfirm();
+    } else if (e.key === "Enter" && !$("modal-confirm").classList.contains("hidden")) {
+      if (pendingDeleteModeId && !$("btn-confirm-delete").disabled) {
+        deleteModeById(pendingDeleteModeId);
+      }
     }
   });
 

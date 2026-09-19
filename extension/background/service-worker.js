@@ -262,18 +262,32 @@ async function runDetection(isManual = false) {
  */
 async function openTabsSequentially(opened) {
   const results = [];
+  const existingTabs = await B.getTabs().catch(() => []);
+  const existingUrls = new Set(
+    existingTabs
+      .map((t) => t.url)
+      .filter(Boolean)
+      .map((u) => u.replace(/\/$/, "").toLowerCase())
+  );
+
   for (let i = 0; i < opened.length; i += 1) {
-    const url = opened[i]?.url;
-    if (!url) {
+    const rawUrl = opened[i]?.url || (typeof opened[i] === "string" ? opened[i] : null);
+    if (!rawUrl) {
       warnOnce("mode link without url skipped during restore");
       continue;
     }
-    if (i > 0) await new Promise((resolve) => setTimeout(resolve, 120));
+    const normalized = rawUrl.replace(/\/$/, "").toLowerCase();
+    if (existingUrls.has(normalized)) {
+      results.push(rawUrl);
+      continue;
+    }
+    if (results.length > 0) await new Promise((resolve) => setTimeout(resolve, 25));
     try {
-      await B.createTab(url, i === 0);
-      results.push(url);
+      await B.createTab(rawUrl, results.length === 0);
+      results.push(rawUrl);
+      existingUrls.add(normalized);
     } catch (err) {
-      warnOnce(`could not open tab ${url}`, err?.message);
+      warnOnce(`could not open tab ${rawUrl}`, err?.message);
     }
   }
   return results;
@@ -435,10 +449,11 @@ async function handleMessage(message = {}) {
       const suggestion = await getSuggestion();
       const eventId = message.eventId ?? suggestion?.eventId;
       let modeId = message.modeId ?? suggestion?.modeId ?? null;
+      const isDiscovery = message.kind === "discovery" || (!modeId && !message.modeId);
 
       if (eventId) {
         const responded = await respondToDetection(eventId, true, {
-          createMode: message.kind === "discovery",
+          createMode: isDiscovery,
           name: message.name,
           tabs: suggestion?.tabs ?? [],
         });
@@ -446,16 +461,32 @@ async function handleMessage(message = {}) {
       }
       if (!modeId) throw new Error("NO_MODE");
 
-      /* All-or-nothing: activate + open tabs before clearing the
-       * suggestion, so a failed restore leaves the card retryable. */
-      const restored = await restoreMode(modeId, "detected");
+      let opened = [];
+      let sessionId = null;
+
+      if (isDiscovery) {
+        // Mode created from currently open tabs: user already has these tabs open!
+        // Do NOT reopen duplicate tabs. Activate session in background so duration starts tracking.
+        const activated = await activateMode(modeId, "detected").catch(() => null);
+        if (activated?.session?.id) {
+          await setLiveSessionId(activated.session.id);
+          sessionId = activated.session.id;
+        }
+      } else {
+        // User switched to a different existing mode: restore its tabs
+        const restored = await restoreMode(modeId, "detected");
+        opened = restored.opened ?? [];
+        sessionId = restored.session?.id ?? null;
+      }
+
       await clearSuggestion();
       await setBadge(false);
       return {
         ok: true,
-        opened: restored.opened ?? [],
+        opened,
+        created: isDiscovery,
         label: message.label,
-        sessionId: restored.session?.id ?? null,
+        sessionId,
       };
     }
 
@@ -480,10 +511,16 @@ async function handleMessage(message = {}) {
       if (!name) throw new Error("NAME_REQUIRED");
       const tabs = await B.getTabs();
       if (tabs.length === 0) throw new Error("NO_TABS");
-      await createMode(
+      const res = await createMode(
         name,
         tabs.map((t) => ({ title: t.title, url: t.url })),
       );
+      if (res?.mode?.id) {
+        const activated = await activateMode(res.mode.id, "saved").catch(() => null);
+        if (activated?.session?.id) {
+          await setLiveSessionId(activated.session.id);
+        }
+      }
       return { ok: true, count: tabs.length };
     }
 
