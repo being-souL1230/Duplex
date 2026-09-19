@@ -3,7 +3,7 @@
  * Uses the `chrome.*` namespace (Edge/Brave/Opera alias it identically).
  */
 
-import { WEB_APP_URL } from "../core/constants.js";
+import { CANDIDATE_URLS, WEB_APP_URL, setWebAppUrl } from "../core/constants.js";
 import { badgeVisual } from "../core/badgeStates.js";
 
 const META_KEY = "dx_tab_meta";
@@ -28,7 +28,22 @@ function isHttpUrl(url) {
 export const ChromeAdapter = {
   /** @returns {Promise<TabSnapshot[]>} */
   async getTabs() {
-    const win = await chrome.windows.getLastFocused({ populate: true });
+    let win = null;
+    try {
+      win = await chrome.windows.getLastFocused({ populate: true, windowTypes: ["normal"] });
+    } catch {
+      /* ignore */
+    }
+
+    if (!win?.tabs || win.tabs.length === 0) {
+      try {
+        const windows = await chrome.windows.getAll({ populate: true, windowTypes: ["normal"] });
+        win = windows.find((w) => w.focused) || windows[0] || null;
+      } catch {
+        /* ignore */
+      }
+    }
+
     const meta = await loadMeta();
     const now = Date.now();
 
@@ -82,12 +97,18 @@ export const ChromeAdapter = {
   },
 
   async isLoggedIn() {
-    try {
-      const cookie = await chrome.cookies.get({ url: WEB_APP_URL, name: "dx_session" });
-      return Boolean(cookie?.value);
-    } catch {
-      return false;
+    for (const url of CANDIDATE_URLS) {
+      try {
+        const cookie = await chrome.cookies.get({ url, name: "dx_session" });
+        if (cookie?.value) {
+          setWebAppUrl(url);
+          return true;
+        }
+      } catch {
+        /* ignore */
+      }
     }
+    return false;
   },
 
   /** In MV3 the SW dies between events, so the timer only lives per-wake. */

@@ -19,6 +19,7 @@
 
 import { getBrowser } from "../browser/index.js";
 import { BADGE } from "../core/badgeStates.js";
+import { WEB_APP_URL } from "../core/constants.js";
 import {
   ApiError,
   detect,
@@ -28,6 +29,7 @@ import {
   respondToDetection,
   getLiveSession,
   endLiveSession,
+  deleteMode,
   isTransient,
 } from "../core/api.js";
 import {
@@ -129,14 +131,14 @@ async function refreshBadgeFromState() {
  * @returns the detect response
  * @throws the last error after all attempts are exhausted
  */
-async function detectWithRetry(tabs) {
+async function detectWithRetry(tabs, force = false) {
   let lastError = null;
   for (let attempt = 0; attempt <= DETECT_RETRIES; attempt += 1) {
     if (attempt > 0) {
       await new Promise((resolve) => setTimeout(resolve, DETECT_RETRY_BASE_MS * attempt));
     }
     try {
-      return await detect(tabs);
+      return await detect(tabs, true, force);
     } catch (err) {
       lastError = err;
       if (!isTransient(err)) throw err;
@@ -192,17 +194,23 @@ async function resetObservationState() {
  * a manual popup run that finds a suggestion must still light the dot,
  * and a manual run that fails must still show the paused state.
  */
-async function runDetection() {
-  if (!(await B.isLoggedIn())) return null;
+async function runDetection(isManual = false) {
+  if (!(await B.isLoggedIn())) {
+    if (isManual) throw new ApiError("AUTH_REQUIRED", "AUTH_REQUIRED", 401);
+    return null;
+  }
 
   const tabs = await B.getTabs();
-  if (tabs.length === 0) return null;
+  if (tabs.length === 0) {
+    if (isManual) return { noTabs: true };
+    return null;
+  }
 
   await appendSignals(tabs);
 
   let data;
   try {
-    data = await detectWithRetry(tabs);
+    data = await detectWithRetry(tabs, isManual);
   } catch (err) {
     if (err?.code === "AUTH_REQUIRED") throw err;
     await noteAutoDetectFailure(err);
@@ -387,7 +395,7 @@ chrome.tabs.onRemoved.addListener((tabId) => {
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   handleMessage(message)
     .then(sendResponse)
-    .catch((err) => sendResponse({ error: err.code ?? err.message }));
+    .catch((err) => sendResponse({ error: err.message || err.code || "UNKNOWN_ERROR" }));
   return true; /* async response */
 });
 
@@ -406,11 +414,12 @@ async function handleMessage(message = {}) {
         tabCount: tabs.length,
         debounceMs: DEBOUNCE_MS,
         backoffMs,
+        webAppUrl: WEB_APP_URL,
       };
     }
 
     case "DETECT_NOW": {
-      const data = await runDetection();
+      const data = await runDetection(true);
       const suggestion = await getSuggestion();
       return {
         result: data?.result ?? null,
@@ -418,6 +427,7 @@ async function handleMessage(message = {}) {
         disabled: Boolean(data?.disabled),
         suppressed: data?.suppressed ?? null,
         suggestion,
+        noTabs: Boolean(data?.noTabs),
       };
     }
 
@@ -494,6 +504,12 @@ async function handleMessage(message = {}) {
     case "ACTIVATE_MODE": {
       const restored = await restoreMode(message.modeId, "restored");
       return { ok: true, opened: restored.opened ?? [] };
+    }
+
+    case "DELETE_MODE": {
+      if (!message.modeId) throw new Error("MODE_ID_REQUIRED");
+      await deleteMode(message.modeId);
+      return { ok: true };
     }
 
     default:

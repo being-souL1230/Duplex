@@ -12,7 +12,7 @@ const BADGE_KEY = "dx_last_badge";
 
 const area = (globalThis.browser ?? globalThis.chrome).storage.local;
 
-export const DEBOUNCE_MS = 12_000;
+export const DEBOUNCE_MS = 3_000;
 
 export async function appendSignals(tabs) {
   const entry = { at: Date.now(), tabs };
@@ -68,7 +68,7 @@ export async function clearSuggestion() {
 /* (capped), then resets. User-triggered detects bypass this entirely.  */
 /* ------------------------------------------------------------------ */
 
-const MAX_BACKOFF_MULTIPLIER = 10; /* cap: 10 x 12s = 2 min */
+const MAX_BACKOFF_MULTIPLIER = 8; /* cap: 8 x 3s = 24s */
 
 export function nextBackoffDelayMs(previousFailures, baseMs = DEBOUNCE_MS) {
   return Math.min((previousFailures + 1) * baseMs, MAX_BACKOFF_MULTIPLIER * baseMs);

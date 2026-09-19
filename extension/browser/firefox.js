@@ -10,7 +10,7 @@
  * 5. `idle.setDetectionInterval` exists; idle events work the same.
  */
 
-import { WEB_APP_URL } from "../core/constants.js";
+import { CANDIDATE_URLS, WEB_APP_URL, setWebAppUrl } from "../core/constants.js";
 import { badgeVisual } from "../core/badgeStates.js";
 
 const META_KEY = "dx_tab_meta";
@@ -38,7 +38,22 @@ function isHttpUrl(url) {
 export const FirefoxAdapter = {
   /** @returns {Promise<TabSnapshot[]>} */
   async getTabs() {
-    const win = await api.windows.getLastFocused({ populate: true });
+    let win = null;
+    try {
+      win = await api.windows.getLastFocused({ populate: true, windowTypes: ["normal"] });
+    } catch {
+      /* ignore */
+    }
+
+    if (!win?.tabs || win.tabs.length === 0) {
+      try {
+        const windows = await api.windows.getAll({ populate: true, windowTypes: ["normal"] });
+        win = windows.find((w) => w.focused) || windows[0] || null;
+      } catch {
+        /* ignore */
+      }
+    }
+
     const meta = await loadMeta();
     const now = Date.now();
 
@@ -92,12 +107,18 @@ export const FirefoxAdapter = {
   },
 
   async isLoggedIn() {
-    try {
-      const cookie = await api.cookies.get({ url: WEB_APP_URL, name: "dx_session" });
-      return Boolean(cookie?.value);
-    } catch {
-      return false;
+    for (const url of CANDIDATE_URLS) {
+      try {
+        const cookie = await api.cookies.get({ url, name: "dx_session" });
+        if (cookie?.value) {
+          setWebAppUrl(url);
+          return true;
+        }
+      } catch {
+        /* ignore */
+      }
     }
+    return false;
   },
 
   /**

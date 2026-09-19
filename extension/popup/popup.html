@@ -54,7 +54,7 @@
         </div>
       </div>
 
-      <div id="sug-rename" class="hidden">
+      <div id="sug-rename">
         <input id="sug-name" class="field" placeholder="Name this context" />
       </div>
 
@@ -85,6 +85,18 @@
     </section>
 
     <p id="status" class="status hidden"></p>
+
+    <!-- custom confirm modal dialog -->
+    <div id="modal-confirm" class="confirm-overlay hidden">
+      <div class="confirm-box">
+        <p class="confirm-title" id="confirm-text">Delete mode?</p>
+        <p class="confirm-sub">This cannot be undone.</p>
+        <div class="confirm-actions">
+          <button id="btn-confirm-delete" class="btn btn-danger">Delete</button>
+          <button id="btn-confirm-cancel" class="btn">Cancel</button>
+        </div>
+      </div>
+    </div>
 
     <script src="popup.js" type="module"></script>
   </body>

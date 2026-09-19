@@ -24,7 +24,11 @@ export async function POST(request: Request) {
     return Response.json({ disabled: true, result: null, eventId: null });
   }
 
-  const body = (await request.json()) as { tabs?: IncomingTab[]; persist?: boolean };
+  const body = (await request.json()) as {
+    tabs?: IncomingTab[];
+    persist?: boolean;
+    force?: boolean;
+  };
   const now = Date.now();
   const tabs: RawTab[] = (body.tabs ?? [])
     .filter((t) => typeof t.url === "string" && t.url.length > 3)
@@ -57,12 +61,14 @@ export async function POST(request: Request) {
     { high: user.highThreshold, medium: user.mediumThreshold },
   );
 
-  /* Cooldown: don't re-suggest a cluster the user just ignored. If the top
-   * candidate is cooling down, promote the best clean alternative instead. */
+  /* Cooldown: don't re-suggest a cluster the user just ignored, unless explicitly
+   * forced via manual detection. If the top candidate is cooling down, promote the best
+   * clean alternative instead. */
   const candidate = result.candidate;
-  const check = candidate
-    ? isSuppressed(candidate, ignores)
-    : { suppressed: false, retryAfterMs: 0 };
+  const check =
+    candidate && !body.force
+      ? isSuppressed(candidate, ignores)
+      : { suppressed: false, retryAfterMs: 0 };
   let suppressedInfo: { label: string; retryAfter: string } | null = null;
 
   if (candidate && check.suppressed) {

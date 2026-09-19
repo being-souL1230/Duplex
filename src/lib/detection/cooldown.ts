@@ -8,8 +8,8 @@ import { detectionEvents } from "@/db/schema";
  * it for a while so the product never nags.
  */
 
-const WINDOW_MINUTES = 60;
-const COOLDOWN_MINUTES = 45;
+const WINDOW_MINUTES = 10;
+const COOLDOWN_MINUTES = 2;
 const MAX_TRACKED = 40;
 
 export type CooldownEntry = {

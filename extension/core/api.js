@@ -10,7 +10,7 @@
  *   HTTP          - any other non-ok (400/404/409...): never retry
  */
 
-import { WEB_APP_URL } from "./constants.js";
+import { CANDIDATE_URLS, WEB_APP_URL, setWebAppUrl } from "./constants.js";
 
 export const API_TIMEOUT_MS = 10_000;
 
@@ -43,17 +43,40 @@ function timeoutSignal() {
   return ctrl.signal;
 }
 
+async function fetchOne(baseUrl, path, options) {
+  return await fetch(`${baseUrl}${path}`, {
+    credentials: "include",
+    ...options,
+    headers: { "Content-Type": "application/json", ...options.headers },
+    signal: timeoutSignal(),
+  });
+}
+
 async function request(path, options = {}) {
-  let res;
-  try {
-    res = await fetch(`${WEB_APP_URL}${path}`, {
-      credentials: "include",
-      ...options,
-      headers: { "Content-Type": "application/json", ...options.headers },
-      signal: timeoutSignal(),
-    });
-  } catch {
-    /* TypeError: connection refused / DNS / CORS; AbortError: our timeout */
+  let res = null;
+
+  // Try current WEB_APP_URL first, then candidate ports (e.g. 3001 or 3000)
+  const urlsToTry = [
+    WEB_APP_URL,
+    ...CANDIDATE_URLS.filter((u) => u !== WEB_APP_URL),
+  ];
+
+  for (const baseUrl of urlsToTry) {
+    try {
+      const candidateRes = await fetchOne(baseUrl, path, options);
+      // 404 indicates a different app (e.g. another dev server on port 3000)
+      if (candidateRes.status === 404) {
+        continue;
+      }
+      res = candidateRes;
+      setWebAppUrl(baseUrl);
+      break;
+    } catch {
+      // connection error / timeout on this port; try next port
+    }
+  }
+
+  if (!res) {
     throw new ApiError("NETWORK", `network error on ${path}`);
   }
 
@@ -71,11 +94,11 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-/** POST /api/detect - body tabs: [{ tabId, title, url, secondsAgo }] */
-export function detect(tabs, persist = true) {
+/** POST /api/detect - body tabs: [{ tabId, title, url, secondsAgo }], force: boolean */
+export function detect(tabs, persist = true, force = false) {
   return request("/api/detect", {
     method: "POST",
-    body: JSON.stringify({ tabs, persist }),
+    body: JSON.stringify({ tabs, persist, force }),
   });
 }
 
@@ -114,4 +137,8 @@ export function getLiveSession() {
 
 export function endLiveSession() {
   return request("/api/sessions/live", { method: "POST" });
+}
+
+export function deleteMode(modeId) {
+  return request(`/api/modes/${modeId}`, { method: "DELETE" });
 }
