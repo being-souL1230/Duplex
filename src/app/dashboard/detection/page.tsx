@@ -55,7 +55,7 @@ export default async function DetectionPage() {
           muted
         />
         <div className="max-w-[16rem] text-xs leading-relaxed text-muted">
-          High confidence earns the right to ask a question — never to act. Ignoring a
+          High confidence earns the right to ask a question - never to act. Ignoring a
           suggestion lowers that association for next time.
         </div>
       </section>

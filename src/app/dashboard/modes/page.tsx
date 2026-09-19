@@ -32,7 +32,7 @@ export default async function ModesPage() {
       <PageHead
         eyebrow="Work modes"
         title="Modes"
-        subtitle="Each circle is one intention — its resources, its history, its restore point."
+        subtitle="Each circle is one intention - its resources, its history, its restore point."
       />
       <ModesBoard initialModes={dto} />
     </>

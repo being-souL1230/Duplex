@@ -4,7 +4,7 @@ import { and, eq, gt } from "drizzle-orm";
 import { db } from "@/db";
 import { authSessions, users, type User } from "@/db/schema";
 
-const COOKIE = "ff_session";
+const COOKIE = "dx_session";
 const DAY = 1000 * 60 * 60 * 24;
 
 export function hashPassword(password: string): string {

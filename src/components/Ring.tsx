@@ -8,7 +8,7 @@ type RingProps = {
   muted?: boolean;
 };
 
-/** Circular progress dial — used everywhere instead of bars. */
+/** Circular progress dial - used everywhere instead of bars. */
 export function Ring({
   value,
   size = 128,

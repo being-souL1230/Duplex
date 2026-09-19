@@ -1,7 +1,7 @@
-/* FocusFlow service worker — browser-agnostic core.
+/* Duplex service worker - browser-agnostic core.
  * All chrome.* and browser.* access goes through the BrowserAdapter
  * (see browser/index.js). The detection engine itself lives server-side
- * at /api/detect — the extension is a signal collector + suggester.
+ * at /api/detect - the extension is a signal collector + suggester.
  */
 
 import { getBrowser } from "../browser/index.js";
@@ -29,7 +29,7 @@ import {
 const B = getBrowser();
 
 const IDLE_SECONDS = 15 * 60; /* user idle this long -> session ends */
-const END_PING_ALARM = "ff_end_ping";
+const END_PING_ALARM = "dx_end_ping";
 
 /* ------------------------------------------------------------------ */
 /* Badge                                                               */
@@ -39,7 +39,7 @@ async function setBadge(hasSuggestion) {
   try {
     await B.setBadge(hasSuggestion);
   } catch {
-    /* badge is cosmetic — never let it break detection */
+    /* badge is cosmetic - never let it break detection */
   }
 }
 
@@ -104,7 +104,7 @@ async function restoreMode(modeId, source) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Session lifecycle — sessions must record real durations              */
+/* Session lifecycle - sessions must record real durations              */
 /* ------------------------------------------------------------------ */
 
 async function autoEndSession(reason) {
@@ -113,11 +113,11 @@ async function autoEndSession(reason) {
 
     const data = await endLiveSession();
     if (data.closed > 0) {
-      console.info(`[FocusFlow] session ended (${reason}), duration recorded`);
+      console.info(`[Duplex] session ended (${reason}), duration recorded`);
     }
   } catch (err) {
     if (err.code !== "AUTH_REQUIRED") {
-      console.warn("[FocusFlow] autoEnd failed:", err.message);
+      console.warn("[Duplex] autoEnd failed:", err.message);
     }
   }
 }
@@ -136,7 +136,7 @@ async function reconcileSession() {
       await endLiveSession(); /* stale live session from an old run */
     }
   } catch (err) {
-    if (err.code !== "AUTH_REQUIRED") console.warn("[FocusFlow] reconcile failed:", err.message);
+    if (err.code !== "AUTH_REQUIRED") console.warn("[Duplex] reconcile failed:", err.message);
   }
 }
 
@@ -160,13 +160,13 @@ B.onStartup(() => {
 });
 
 /* ------------------------------------------------------------------ */
-/* Tab event listeners — browser-agnostic via adapter                  */
+/* Tab event listeners - browser-agnostic via adapter                  */
 /* ------------------------------------------------------------------ */
 
 function scheduleAutoDetect() {
   B.scheduleDebounced(() => {
     runDetection().catch((err) => {
-      if (err.code !== "AUTH_REQUIRED") console.warn("[FocusFlow] detect failed:", err.message);
+      if (err.code !== "AUTH_REQUIRED") console.warn("[Duplex] detect failed:", err.message);
     });
   }, DEBOUNCE_MS);
 }

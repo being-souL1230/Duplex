@@ -55,7 +55,7 @@ export function LiveConsole({
     });
     if (!res.ok) {
       setPhase("idle");
-      setStatus("Detection failed — the engine is unreachable");
+      setStatus("Detection failed - the engine is unreachable");
       return;
     }
     const data = (await res.json()) as {
@@ -72,7 +72,7 @@ export function LiveConsole({
     if (data.suppressed && !data.result?.candidate) {
       setPhase("idle");
       setStatus(
-        `“${data.suppressed.label}” is cooling down — try again in ${data.suppressed.retryAfter}`,
+        `“${data.suppressed.label}” is cooling down - try again in ${data.suppressed.retryAfter}`,
       );
       return;
     }
@@ -143,7 +143,7 @@ export function LiveConsole({
     }
     setResult(null);
     setPhase("idle");
-    setStatus(`Suggestion ignored — this context stays quiet for 45 min`);
+    setStatus(`Suggestion ignored - this context stays quiet for 45 min`);
     router.refresh();
   }
 
@@ -344,7 +344,7 @@ export function LiveConsole({
                 </span>
               </div>
               <p className="mt-5 max-w-[15rem] text-xs leading-relaxed text-muted">
-                Workspace rebuilt. The unrelated tabs were left untouched — closing is
+                Workspace rebuilt. The unrelated tabs were left untouched - closing is
                 opt-in.
               </p>
               <button className="btn mt-5 w-full" onClick={() => pickScenario(scenarioId)}>
@@ -358,7 +358,7 @@ export function LiveConsole({
                 <span className="absolute inset-[-8%] rounded-full border border-white/[0.05] orbit" />
               </div>
               <p className="mt-5 max-w-[15rem] text-xs leading-relaxed text-muted">
-                The engine reads hostname, title words, order and timing — never page
+                The engine reads hostname, title words, order and timing - never page
                 content.
               </p>
               <button

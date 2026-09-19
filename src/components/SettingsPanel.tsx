@@ -135,7 +135,7 @@ export function SettingsPanel({ initial }: { initial: Settings }) {
           on={settings.closeUnrelatedTabs}
           onClick={() => patch({ closeUnrelatedTabs: !settings.closeUnrelatedTabs })}
           label="Close unrelated tabs on restore"
-          hint="Off by default — restoring should never destroy an open context."
+          hint="Off by default - restoring should never destroy an open context."
         />
         <Toggle
           on={settings.aiLabelsEnabled}
@@ -147,7 +147,7 @@ export function SettingsPanel({ initial }: { initial: Settings }) {
           value={settings.highThreshold}
           onChange={(n) => patch({ highThreshold: n })}
           label="High confidence threshold"
-          hint="Above this score FocusFlow asks you to confirm a switch."
+          hint="Above this score Duplex asks you to confirm a switch."
           min={50}
           max={100}
         />

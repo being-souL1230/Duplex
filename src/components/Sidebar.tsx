@@ -78,7 +78,7 @@ export function Sidebar({ name }: { name: string }) {
           <Link
             href="/"
             className="mb-2 flex h-9 w-9 items-center justify-center rounded-full border border-white/15"
-            title="FocusFlow"
+            title="Duplex"
           >
             <span className="h-1.5 w-1.5 rounded-full bg-white/80" />
           </Link>

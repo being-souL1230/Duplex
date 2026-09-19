@@ -24,7 +24,7 @@ export function related(a: TabSignal, b: TabSignal): boolean {
 }
 
 /**
- * Connected components over the relatedness graph — deterministic and explainable.
+ * Connected components over the relatedness graph - deterministic and explainable.
  */
 export function clusterSignals(signals: TabSignal[]): Cluster[] {
   const ordered = [...signals].sort((a, b) => a.timestamp - b.timestamp);
@@ -81,7 +81,7 @@ export function clusterKey(hostnames: string[]): string {
   return Array.from(new Set(hostnames)).sort().slice(0, 6).join("|");
 }
 
-/** Counts jumps between unrelated clusters — the "context switching" signal. */
+/** Counts jumps between unrelated clusters - the "context switching" signal. */
 export function countContextSwitches(signals: TabSignal[]): number {
   const ordered = [...signals].sort((a, b) => a.timestamp - b.timestamp);
   let switches = 0;

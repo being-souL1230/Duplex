@@ -3,7 +3,7 @@ import { buildAuthUrl, googleConfigured, signState } from "@/lib/google";
 
 export const dynamic = "force-dynamic";
 
-/** GET /api/auth/google — kick off the OAuth flow. */
+/** GET /api/auth/google - kick off the OAuth flow. */
 export async function GET(request: Request) {
   if (!googleConfigured()) {
     return Response.json(
@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const headers = new Headers(res.headers);
   headers.append(
     "Set-Cookie",
-    `ff_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`,
+    `dx_oauth_state=${state}; Path=/; HttpOnly; SameSite=Lax; Max-Age=600`,
   );
   return new Response(null, { status: 302, headers });
 }

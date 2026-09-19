@@ -35,7 +35,7 @@ export function AuthShell({
           <span className="relative flex h-8 w-8 items-center justify-center rounded-full border border-white/15">
             <span className="h-2 w-2 rounded-full bg-white/80" />
           </span>
-          <span className="text-sm tracking-tight">FocusFlow</span>
+          <span className="text-sm tracking-tight">Duplex</span>
         </Link>
         <h1 className="text-2xl tracking-[-0.02em]">{title}</h1>
         <p className="mt-2 mb-7 text-xs leading-relaxed text-muted">{subtitle}</p>

@@ -1,11 +1,11 @@
 /**
- * ChromeAdapter — Chromium family: Chrome, Edge, Brave, Opera.
+ * ChromeAdapter - Chromium family: Chrome, Edge, Brave, Opera.
  * Uses the `chrome.*` namespace (Edge/Brave/Opera alias it identically).
  */
 
-import { WEB_APP_URL } from "../lib/constants.js";
+import { WEB_APP_URL } from "../core/constants.js";
 
-const META_KEY = "ff_tab_meta";
+const META_KEY = "dx_tab_meta";
 let tabMeta = null;
 
 async function loadMeta() {
@@ -76,7 +76,7 @@ export const ChromeAdapter = {
 
   async isLoggedIn() {
     try {
-      const cookie = await chrome.cookies.get({ url: WEB_APP_URL, name: "ff_session" });
+      const cookie = await chrome.cookies.get({ url: WEB_APP_URL, name: "dx_session" });
       return Boolean(cookie?.value);
     } catch {
       return false;

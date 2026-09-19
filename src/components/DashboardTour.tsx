@@ -13,7 +13,7 @@ export function DashboardTour({ initialCompleted }: { initialCompleted: boolean 
 
   function finish() {
     if (!completed) {
-      /* optimistic — server call is fire-and-forget */
+      /* optimistic - server call is fire-and-forget */
       setCompleted(true);
       fetch("/api/settings", {
         method: "PATCH",

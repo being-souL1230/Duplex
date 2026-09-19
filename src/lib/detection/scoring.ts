@@ -87,7 +87,7 @@ export function scoreClusterAgainstMode(
   return { score: clamp(Math.round(score)), reasons, matchedHosts };
 }
 
-/** Score for a cluster that matches no mode — is it a recurring, nameable context? */
+/** Score for a cluster that matches no mode - is it a recurring, nameable context? */
 export function scoreDiscovery(
   cluster: Cluster,
   history: Record<string, number>,

@@ -44,7 +44,7 @@ export default async function OverviewPage() {
       <PageHead
         eyebrow={`${new Date().toLocaleDateString(undefined, { weekday: "long" })}`}
         title={`Hello, ${user.name}`}
-        subtitle="Seven day view of how often FocusFlow guessed right and what you actually worked on."
+        subtitle="Seven day view of how often Duplex guessed right and what you actually worked on."
         action={
           <Link href="/dashboard/live" className="btn btn-solid">
             <Triangle size={8} className="text-black/70" />
@@ -133,7 +133,7 @@ export default async function OverviewPage() {
             ))}
             {detections.length === 0 ? (
               <li className="py-6 text-center text-xs text-muted">
-                Nothing detected yet — run the live view.
+                Nothing detected yet - run the live view.
               </li>
             ) : null}
           </ul>

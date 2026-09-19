@@ -16,7 +16,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       <div className="mx-auto w-full max-w-5xl px-5 pb-28 pt-8 lg:pl-28 lg:pr-8">
         {children}
       </div>
-      {/* first-visit guided tour — auto-runs once, replayable from settings */}
+      {/* first-visit guided tour - auto-runs once, replayable from settings */}
       <DashboardTour initialCompleted={user.tourCompleted} />
     </div>
   );

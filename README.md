@@ -1,12 +1,12 @@
-# FocusFlow
+# Duplex
 
-**Context switching killer.** Your browser restores tabs — FocusFlow restores *intent*.
+**Context switching killer.** Your browser restores tabs - Duplex restores *intent*.
 
-FocusFlow is a web app + browser extension built around named **Work Modes** and an
+Duplex is a web app + browser extension built around named **Work Modes** and an
 **Automatic Context Detection Engine**. A Work Mode is one coherent task ("College
 Project", "Freelance Client", "Exam Prep") with its own set of resources. The engine
 watches lightweight browser signals, recognises which mode you're working in, and
-asks before it acts — one click rebuilds your entire workspace.
+asks before it acts - one click rebuilds your entire workspace.
 
 > Built for **Hack Devengers 2.0** · Open Innovation · 24-hour MVP
 
@@ -15,7 +15,7 @@ asks before it acts — one click rebuilds your entire workspace.
 ## The Problem
 
 A browser can restore your last session, but it doesn't understand *why* those tabs
-were open. 15–20 unrelated tabs, repeated searching, accidental distraction — every
+were open. 15-20 unrelated tabs, repeated searching, accidental distraction - every
 context switch costs the same tax: rebuilding your workspace by hand.
 
 ## The Loop
@@ -28,7 +28,7 @@ Detect → Understand → Confirm → Restore → Learn
 |---|---|
 | **Detect** | Lightweight tab signals: hostname, URL pattern, title words, sequence, timing. Never page content. |
 | **Understand** | Deterministic clustering (union-find) + explainable scoring against your modes |
-| **Confirm** | High confidence only earns the right to *ask* — nothing happens silently |
+| **Confirm** | High confidence only earns the right to *ask* - nothing happens silently |
 | **Restore** | Only the tabs that belong to the mode open. Closing others is opt-in. |
 | **Learn** | Accepted/ignored suggestions tune future detection; ignored clusters go quiet for 45 min |
 
@@ -47,8 +47,8 @@ Every point carries a human-readable reason shown in the UI:
 Confidence bands (user-tunable in Settings): **high ≥ 70** → ask to confirm ·
 **medium ≥ 45** → subtle hint · **low** → keep observing silently.
 
-New recurring clusters that match no mode become **discovery candidates** —
-"Create this mode?" — so the product learns contexts you never classified.
+New recurring clusters that match no mode become **discovery candidates** -
+"Create this mode?" - so the product learns contexts you never classified.
 
 ---
 
@@ -82,10 +82,10 @@ New recurring clusters that match no mode become **discovery candidates** —
 
 ### Browser-agnostic extension
 
-The engine never touches `chrome.*` / `browser.*` directly — one adapter layer:
+The engine never touches `chrome.*` / `browser.*` directly - one adapter layer:
 
 ```
-FocusFlow Core                     Browser Adapters
+Duplex Core                     Browser Adapters
 ├── core/api.js   (backend)        ├── browser/chrome.js   → Chrome, Edge, Brave, Opera
 ├── core/store.js (local state)   ├── browser/firefox.js  → Firefox (experimental)
 └── detection = server /api/detect └── browser/index.js    → picks adapter
@@ -107,19 +107,19 @@ FocusFlow Core                     Browser Adapters
 | Auth | Session cookies (scrypt) + **Google OAuth 2.0** (no SDK) |
 | Extension | Manifest V3, vanilla ES modules, zero build tools |
 | Detection | Deterministic heuristic engine, explainable scoring |
-| AI | Optional layer — the engine **never** depends on an API key |
+| AI | Optional layer - the engine **never** depends on an API key |
 
 ## Screens
 
 | Page | Purpose |
 |---|---|
-| `/` | Landing — product story, engine explanation, extension download |
-| `/dashboard` | Overview — 7-day focus stats, accept rate, jump back into recent modes |
-| `/dashboard/modes` | Work modes board — one circle per project, quick "open all links" |
-| `/dashboard/modes/[id]` | Mode detail — resources, switch/restore, edit, per-mode stats |
-| `/dashboard/live` | Live detection — simulated browser window running the real engine |
-| `/dashboard/detection` | Engine log — every suggestion with its exact score and reasons |
-| `/dashboard/sessions` | History — duration and switch counts per restored session |
+| `/` | Landing - product story, engine explanation, extension download |
+| `/dashboard` | Overview - 7-day focus stats, accept rate, jump back into recent modes |
+| `/dashboard/modes` | Work modes board - one circle per project, quick "open all links" |
+| `/dashboard/modes/[id]` | Mode detail - resources, switch/restore, edit, per-mode stats |
+| `/dashboard/live` | Live detection - simulated browser window running the real engine |
+| `/dashboard/detection` | Engine log - every suggestion with its exact score and reasons |
+| `/dashboard/sessions` | History - duration and switch counts per restored session |
 | `/dashboard/settings` | Detection on/off, thresholds, tour replay, extension info |
 
 A **guided tooltip tour** runs once for every new account and can be replayed from Settings.
@@ -142,7 +142,7 @@ npm run dev                 # → http://localhost:3000
 ```env
 DATABASE_URL="postgresql://postgres:yourpassword@127.0.0.1:5432/app_db"
 APP_URL="http://localhost:3000"          # used for OAuth redirect URIs
-GOOGLE_CLIENT_ID=""                      # optional — see below
+GOOGLE_CLIENT_ID=""                      # optional - see below
 GOOGLE_CLIENT_SECRET=""
 ```
 
@@ -157,7 +157,7 @@ http://localhost:3000/api/auth/google/callback
 Without credentials the Google button hides itself; email/password auth always works.
 
 A **demo account** seeds itself on first login page visit:
-`demo@focusflow.dev` / `demo1234` (pre-filled modes, sessions, detection history).
+`demo@duplex.dev` / `demo1234` (pre-filled modes, sessions, detection history).
 New accounts start completely clean.
 
 ### 2. Extension
@@ -167,7 +167,7 @@ which zips a fresh build server-side. For development:
 
 1. Open `chrome://extensions` → enable **Developer mode**
 2. **Load unpacked** → select the `extension/` folder
-3. Sign in on the web app — the extension shares the same session cookie
+3. Sign in on the web app - the extension shares the same session cookie
 4. Browse normally; a badge appears when detection is confident, or use
    *Run detection* in the popup
 
@@ -211,7 +211,7 @@ mirrors the build document's Section 7.
 
 ## Privacy Principles
 
-- Signals are **hostname, URL shape, title words, timing** — never page content,
+- Signals are **hostname, URL shape, title words, timing** - never page content,
   form values, or keystrokes
 - Detection is a visible feature with an on/off switch and an ignore action
 - Nothing is created or opened without explicit confirmation
@@ -226,14 +226,14 @@ npm run lint
 ```
 
 The smoke test simulates every service-worker request and asserts the exact
-response fields the extension reads — login → detect → accept/restore →
+response fields the extension reads - login → detect → accept/restore →
 ignore → cooldown → save → session lifecycle → zip download. It is
 deterministic: each run creates a fresh QA mode on fresh hostnames and
 deletes it afterwards.
 
-## Demo Script (2–3 min)
+## Demo Script (2-3 min)
 
-1. Sign in with `demo@focusflow.dev` — modes and history are ready
+1. Sign in with `demo@duplex.dev` - modes and history are ready
 2. **Live view** → *Mixed window* → **Run detection** → 92% College Project
 3. **Switch to this mode** → only the 5 project resources open
 4. **Detection page** → show the score's exact reasons
@@ -243,4 +243,4 @@ deletes it afterwards.
 
 ---
 
-Built with ☕ and too many open tabs by **Team Hack Devengers** · FocusFlow · 2026
+Built with ☕ and too many open tabs by **Team Hack Devengers** · Duplex · 2026

@@ -3,9 +3,9 @@ import type { ReactNode } from "react";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "FocusFlow — context switching killer",
+  title: "Duplex - context switching killer",
   description:
-    "FocusFlow detects the work context behind your tabs, asks for confirmation, and restores only what belongs.",
+    "Duplex detects the work context behind your tabs, asks for confirmation, and restores only what belongs.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {

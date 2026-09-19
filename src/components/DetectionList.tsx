@@ -66,7 +66,7 @@ export function DetectionList({ items }: { items: DetectionItem[] }) {
                 <p className="truncate text-sm tracking-tight">{row.label}</p>
                 <p className="mono mt-0.5 truncate text-[0.65rem] text-muted">
                   {row.kind === "discovery" ? "new cluster" : "known mode"} ·{" "}
-                  {row.hostnames.slice(0, 3).join(" · ") || "—"}
+                  {row.hostnames.slice(0, 3).join(" · ") || "-"}
                 </p>
               </div>
               <div className="flex shrink-0 items-center gap-2">

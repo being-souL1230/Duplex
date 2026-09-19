@@ -1,12 +1,12 @@
 /**
- * core/store.js — browser-independent state: signal buffer, suggestion,
+ * core/store.js - browser-independent state: signal buffer, suggestion,
  * live-session id. Uses the storage area via the adapter-agnostic
  * `chrome.storage`/`browser.storage` facade (both expose .local).
  */
 
-const BUFFER_KEY = "ff_signal_buffer";
-const SUGGESTION_KEY = "ff_last_suggestion";
-const LIVE_SESSION_KEY = "ff_live_session_id";
+const BUFFER_KEY = "dx_signal_buffer";
+const SUGGESTION_KEY = "dx_last_suggestion";
+const LIVE_SESSION_KEY = "dx_live_session_id";
 
 const area = (globalThis.browser ?? globalThis.chrome).storage.local;
 

@@ -1,9 +1,9 @@
 /**
- * BrowserAdapter — the ONLY place that touches browser-specific APIs.
+ * BrowserAdapter - the ONLY place that touches browser-specific APIs.
  * The core engine never imports `chrome.*` or `browser.*` directly.
  *
- * FocusFlow Core
- *   ├── Context Detection  (core/detector — server /api/detect)
+ * Duplex Core
+ *   ├── Context Detection  (core/detector - server /api/detect)
  *   ├── Clustering/Scoring (server-side, engine is deterministic)
  *   └── BrowserAdapter     ← this layer
  *         ├── chrome.js  → Chromium family (Chrome, Edge, Brave, Opera)
@@ -44,4 +44,4 @@
  * @property {() => Promise<void>} onShutdownSync
  */
 
-export const SESSION_COOKIE = "ff_session";
+export const SESSION_COOKIE = "dx_session";

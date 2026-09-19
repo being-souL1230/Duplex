@@ -1,4 +1,4 @@
-/* FocusFlow popup — talks to the service worker via chrome.runtime messages. */
+/* Duplex popup - talks to the service worker via chrome.runtime messages. */
 
 const $ = (id) => document.getElementById(id);
 
@@ -111,7 +111,7 @@ async function refreshState() {
       show("view-idle");
     }
   } catch (err) {
-    setStatus(`Could not reach the web app — is it running?`);
+    setStatus(`Could not reach the web app - is it running?`);
     show("view-idle");
   }
 }
@@ -151,7 +151,7 @@ async function runDetection() {
       return;
     }
     if (data.suppressed && !data.suggestion) {
-      setStatus(`“${data.suppressed.label}” cooling down — retry in ${data.suppressed.retryAfter}`);
+      setStatus(`“${data.suppressed.label}” cooling down - retry in ${data.suppressed.retryAfter}`);
       show("view-idle");
       return;
     }
@@ -159,7 +159,7 @@ async function runDetection() {
     if (suggestion) {
       renderSuggestion(suggestion);
     } else if (data.result?.candidate) {
-      setStatus("Low confidence — keep observing");
+      setStatus("Low confidence - keep observing");
       show("view-idle");
     } else {
       setStatus("No context detected in this window");
@@ -184,8 +184,8 @@ async function acceptSuggestion() {
     const opened = data.opened?.length ?? 0;
     $("restored-text").textContent =
       data.label != null
-        ? `Switched to ${data.label} — ${opened} resources opened.`
-        : `Workspace rebuilt — ${opened} resources opened.`;
+        ? `Switched to ${data.label} - ${opened} resources opened.`
+        : `Workspace rebuilt - ${opened} resources opened.`;
     show("view-restored");
     clearCurrentSuggestion();
     renderModes(await loadModes());

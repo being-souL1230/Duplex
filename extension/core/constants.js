@@ -1,7 +1,7 @@
-/* Shared constants and tiny helpers for the FocusFlow extension. */
+/* Shared constants and tiny helpers for the Duplex extension. */
 
 export const WEB_APP_URL = "http://localhost:3000";
-const SESSION_COOKIE = "ff_session";
+const SESSION_COOKIE = "dx_session";
 
 export async function getCookie(name) {
   try {

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 
 /**
  * Dashboard page header with a band image stretched behind the title,
- * fading into the page background — same treatment as the reference design.
+ * fading into the page background - same treatment as the reference design.
  */
 export function Banner({
   src,

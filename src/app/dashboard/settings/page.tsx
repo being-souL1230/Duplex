@@ -14,7 +14,7 @@ export default async function SettingsPage() {
       <PageHead
         eyebrow="Control"
         title="Settings"
-        subtitle="Detection is a feature you own — switch it off, raise the bar, or keep it quiet."
+        subtitle="Detection is a feature you own - switch it off, raise the bar, or keep it quiet."
       />
       <SettingsPanel
         initial={{

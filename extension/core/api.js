@@ -1,10 +1,10 @@
 /**
- * core/api.js — thin API client. Every call goes through the Next.js app,
- * so authorization comes from the same ff_session cookie the website uses.
- * Pure fetch — no browser APIs here (cookie access lives in the adapter).
+ * core/api.js - thin API client. Every call goes through the Next.js app,
+ * so authorization comes from the same dx_session cookie the website uses.
+ * Pure fetch - no browser APIs here (cookie access lives in the adapter).
  */
 
-import { WEB_APP_URL } from "../lib/constants.js";
+import { WEB_APP_URL } from "./constants.js";
 
 async function request(path, options = {}) {
   const res = await fetch(`${WEB_APP_URL}${path}`, {
@@ -21,7 +21,7 @@ async function request(path, options = {}) {
   return res.json();
 }
 
-/** POST /api/detect — body tabs: [{ tabId, title, url, secondsAgo }] */
+/** POST /api/detect - body tabs: [{ tabId, title, url, secondsAgo }] */
 export function detect(tabs, persist = true) {
   return request("/api/detect", {
     method: "POST",
@@ -38,7 +38,7 @@ export function createMode(name, links) {
     method: "POST",
     body: JSON.stringify({
       name,
-      description: "Saved from the FocusFlow extension.",
+      description: "Saved from the Duplex extension.",
       links,
     }),
   });

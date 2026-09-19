@@ -23,7 +23,7 @@ const SHARED = [
   "browser/firefox.js",
   "core/api.js",
   "core/store.js",
-  "lib/constants.js",
+  "core/constants.js",
   "popup/popup.html",
   "popup/popup.css",
   "popup/popup.js",
@@ -35,14 +35,14 @@ const SHARED = [
 const TARGETS = {
   chromium: {
     files: ["manifest.json", "background/service-worker.js", ...SHARED],
-    folder: "focusflow-extension",
-    filename: "focusflow-extension.zip",
+    folder: "duplex-extension",
+    filename: "duplex-extension.zip",
   },
   firefox: {
     /* The gecko manifest ships AS manifest.json inside the zip. */
     files: ["manifest.firefox.json", "background/firefox-entry.js", "background/service-worker.js", ...SHARED],
-    folder: "focusflow-extension-firefox",
-    filename: "focusflow-extension-firefox.zip",
+    folder: "duplex-extension-firefox",
+    filename: "duplex-extension-firefox.zip",
   },
 } as const;
 

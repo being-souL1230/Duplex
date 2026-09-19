@@ -1,5 +1,5 @@
 /**
- * Google OAuth 2.0 (Authorization Code flow) — minimal, no SDK.
+ * Google OAuth 2.0 (Authorization Code flow) - minimal, no SDK.
  *
  * Env needed (put real values in .env, placeholders in .env.example):
  *   GOOGLE_CLIENT_ID
@@ -10,7 +10,7 @@
  *   https://yourdomain.com/api/auth/google/callback  (prod)
  *
  * If credentials are missing, Google sign-in is hidden and the API
- * returns 503 — email/password keeps working everywhere.
+ * returns 503 - email/password keeps working everywhere.
  */
 
 import { createHmac } from "node:crypto";
@@ -25,11 +25,25 @@ export function googleConfigured(): boolean {
 
 /**
  * Deterministic redirect URI. Google matches it EXACTLY against the
- * Authorized redirect URIs list, so we pin it via APP_URL when set —
- * otherwise browsing via 127.0.0.1 vs localhost would break the match.
+ * Authorized redirect URIs list, so we pin the origin instead of trusting
+ * request headers. Priority:
+ *   APP_URL (explicit) > Vercel production domain > request origin.
+ * Vercel vars carry no protocol, so add https:// when missing.
  */
 export function googleRedirectUri(origin: string): string {
-  return `${process.env.APP_URL ?? origin}/api/auth/google/callback`;
+  const raw =
+    process.env.APP_URL ??
+    process.env.VERCEL_PROJECT_PRODUCTION_URL ??
+    process.env.VERCEL_URL ??
+    origin;
+  const base = /^https?:\/\//.test(raw) ? raw : `https://${raw}`;
+  const url = new URL(base);
+  /* Google only allows http on localhost - production MUST be https,
+   * even if APP_URL was misconfigured with an http:// prefix. */
+  if (!/^(localhost|127\.0\.0\.1)$/.test(url.hostname)) {
+    url.protocol = "https:";
+  }
+  return `${url.origin}/api/auth/google/callback`;
 }
 
 /** Build the consent-screen URL with a CSRF state parameter. */

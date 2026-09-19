@@ -1,5 +1,5 @@
 """
-FocusFlow extension integration smoke test.
+Duplex extension integration smoke test.
 
 Simulates the EXACT requests the service worker makes and asserts
 that every response field the SW / popup code reads is present.
@@ -46,14 +46,14 @@ def main():
     # ---------- 1. login ----------
     print("\n== 1. Login (extension cookie auth) ==")
     res = curl(["-c", JAR, "-X", "POST", f"{BASE}/api/auth/login"],
-               {"email": "demo@focusflow.dev", "password": "demo1234"})
+               {"email": "demo@duplex.dev", "password": "demo1234"})
     check("POST /api/auth/login -> ok:true", res and res.get("ok") is True)
 
     # ---------- 2. GET_STATE -> isLoggedIn + LIST_MODES ----------
     print("\n== 2. GET_STATE / LIST_MODES contract ==")
     with open(JAR) as fh:
         cookie = fh.read()
-    check("ff_session cookie set", "ff_session" in cookie)
+    check("dx_session cookie set", "dx_session" in cookie)
 
     res = curl(["-b", JAR, f"{BASE}/api/modes"])
     modes = res.get("modes", []) if res else []
@@ -170,7 +170,7 @@ def main():
     print("\n== 6. SAVE_TABS (/api/modes POST) contract ==")
     res = curl(["-b", JAR, "-X", "POST", f"{BASE}/api/modes"],
                {"name": f"Extension Save {run_id}",
-                "description": "Saved from the FocusFlow extension.",
+                "description": "Saved from the Duplex extension.",
                 "links": [{"title": "Example", "url": "https://example.com/article"}]})
     check("POST /api/modes -> 201 mode", res and "mode" in (res or {}))
     saved_mode_id = (res or {}).get("mode", {}).get("id")

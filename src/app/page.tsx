@@ -1,5 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
+import { BrandMark } from "@/components/BrandMark";
 import { Orbits, Triangle } from "@/components/Shapes";
 import { getCurrentUser } from "@/lib/auth";
 
@@ -13,7 +14,7 @@ const LOOP = [
   { k: "Learn", d: "Next time is sharper", visual: "learn" },
 ];
 
-/** Tiny wordless visual per loop step — the story told in dots, not text. */
+/** Tiny wordless visual per loop step - the story told in dots, not text. */
 function StepVisual({ kind }: { kind: string }) {
   const dot = (cx: number, cy: number, o: number, key: string | number) => (
     <circle key={key} cx={cx} cy={cy} r={2.3} fill="white" opacity={o} />
@@ -96,13 +97,7 @@ export default async function LandingPage() {
       {/* nav */}
       <header className="sticky top-4 z-20 mt-4">
         <nav className="pill mx-auto flex items-center justify-between gap-4 py-2 pl-3 pr-2 backdrop-blur-xl">
-          <Link href="/" className="flex items-center gap-2.5">
-            <span className="relative flex h-8 w-8 items-center justify-center rounded-full border border-white/15">
-              <span className="h-2 w-2 rounded-full bg-white/80" />
-              <span className="absolute inset-0 rounded-full border border-dashed border-white/10 orbit" />
-            </span>
-            <span className="text-sm tracking-tight">FocusFlow</span>
-          </Link>
+          <BrandMark size="sm" />
           <div className="hidden items-center gap-6 text-xs text-muted sm:flex">
             <a href="#loop" className="transition hover:text-fg">Loop</a>
             <a href="#engine" className="transition hover:text-fg">Engine</a>
@@ -125,10 +120,10 @@ export default async function LandingPage() {
           <h1 className="mt-5 text-[2.6rem] leading-[1.02] tracking-[-0.03em] sm:text-6xl">
             Your browser restores tabs.
             <br />
-            <span className="text-muted">FocusFlow restores intent.</span>
+            <span className="text-muted">Duplex restores intent.</span>
           </h1>
           <p className="mt-6 max-w-md text-sm leading-relaxed text-muted">
-            It watches lightweight signals — hostname, title, timing — clusters them,
+            It watches lightweight signals - hostname, title, timing - clusters them,
             scores the match against your work modes, and asks before it acts.
           </p>
           <div className="mt-8 flex flex-wrap items-center gap-3">
@@ -234,9 +229,9 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* finale — extension + promises + cta, one connected composition */}
+      {/* finale - extension + promises + cta, one connected composition */}
       <section className="relative mt-24 overflow-hidden rounded-[2.5rem] border border-white/8">
-        {/* shared backdrop — connects every band of the finale */}
+        {/* shared backdrop - connects every band of the finale */}
         <Image
           src="/images/prism.jpg"
           alt=""
@@ -258,8 +253,8 @@ export default async function LandingPage() {
                 Put the engine in your browser
               </h2>
               <p className="mt-2 max-w-lg text-xs leading-relaxed text-muted">
-                Watches the same lightweight signals in your real tabs — hostname,
-                title, timing — and suggests your work mode from the toolbar. Shares
+                Watches the same lightweight signals in your real tabs - hostname,
+                title, timing - and suggests your work mode from the toolbar. Shares
                 the web session; no second login.
               </p>
               <div className="mt-4 flex flex-wrap items-center gap-x-2 gap-y-1.5 text-[0.7rem] text-muted">
@@ -288,14 +283,14 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          {/* triangle divider — connects extension to the promise triad */}
+          {/* triangle divider - connects extension to the promise triad */}
           <div className="flex items-center gap-3 px-8 sm:px-10">
             <div className="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-white/10" />
             <Triangle size={8} className="text-white/40" />
             <div className="h-px flex-1 bg-gradient-to-l from-transparent via-white/10 to-white/10" />
           </div>
 
-          {/* promises — one flowing triad, no boxes */}
+          {/* promises - one flowing triad, no boxes */}
           <div id="privacy" className="grid gap-x-10 gap-y-7 p-8 sm:grid-cols-3 sm:p-10">
             {[
               {
@@ -329,7 +324,7 @@ export default async function LandingPage() {
             <div>
               <p className="text-lg tracking-[-0.02em]">One click. The right context.</p>
               <p className="mono mt-1 text-[0.65rem] text-muted">
-                demo@focusflow.dev · watch a mixed window resolve into one workspace
+                demo@duplex.dev · watch a mixed window resolve into one workspace
               </p>
             </div>
             <div className="flex flex-wrap gap-2">
@@ -345,7 +340,7 @@ export default async function LandingPage() {
       </section>
 
       <footer className="mt-16 flex items-center justify-between text-xs text-muted">
-        <span>FocusFlow</span>
+        <span>Duplex</span>
         <span className="mono">Hack Devengers 2.0</span>
       </footer>
     </main>

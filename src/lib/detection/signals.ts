@@ -1,5 +1,5 @@
 /**
- * signals.ts — normalizes raw tab events into lightweight context signals.
+ * signals.ts - normalizes raw tab events into lightweight context signals.
  * Only hostname / path shape / title words / timing are used. Never page content.
  */
 

@@ -12,7 +12,7 @@ export function AuthForm({
 }) {
   const router = useRouter();
   const isLogin = mode === "login";
-  const [email, setEmail] = useState(isLogin ? "demo@focusflow.dev" : "");
+  const [email, setEmail] = useState(isLogin ? "demo@duplex.dev" : "");
   const [password, setPassword] = useState(isLogin ? "demo1234" : "");
   const [name, setName] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -37,7 +37,7 @@ export function AuthForm({
       router.push("/dashboard");
       router.refresh();
     } catch {
-      setError("Network error — try again");
+      setError("Network error - try again");
       setLoading(false);
     }
   }

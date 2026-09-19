@@ -46,7 +46,7 @@ export function ModeDisc({ mode }: { mode: ModeDTO }) {
     }
 
     /* Then record the session server-side (fire and forget).
-     * Optimistic cards carry a temp id that is not in the DB yet —
+     * Optimistic cards carry a temp id that is not in the DB yet -
      * skip the session call for those. */
     if (!mode.id.startsWith("temp-")) {
       await fetch(`/api/modes/${mode.id}/activate`, {
@@ -60,16 +60,16 @@ export function ModeDisc({ mode }: { mode: ModeDTO }) {
     if (opened === valid) {
       setStatus(`${opened} opened`);
     } else if (opened === 0) {
-      setStatus("Pop-ups blocked — allow them for this site");
+      setStatus("Pop-ups blocked - allow them for this site");
     } else {
-      setStatus(`${opened}/${valid} opened — allow pop-ups for all`);
+      setStatus(`${opened}/${valid} opened - allow pop-ups for all`);
     }
     router.refresh();
   }
 
   return (
     <div className="disc group relative flex aspect-square flex-col items-center justify-center gap-1 px-6 text-center">
-      {/* quick open — tiny icon circle, top corner, revealed on hover */}
+      {/* quick open - tiny icon circle, top corner, revealed on hover */}
       <button
         onClick={openAll}
         disabled={opening || mode.links.length === 0}
@@ -164,7 +164,7 @@ export function ModesBoard({ initialModes }: { initialModes: ModeDTO[] }) {
     }
 
     /* Swap the temp id for the real one immediately so the fresh card is
-     * safe to click — its old `temp-…` id never existed in the DB. */
+     * safe to click - its old `temp-…` id never existed in the DB. */
     const data = (await res.json()) as { mode?: { id?: string } };
     const realId = data.mode?.id;
     if (realId) {
@@ -196,7 +196,7 @@ export function ModesBoard({ initialModes }: { initialModes: ModeDTO[] }) {
           </div>
           <input
             className="field"
-            placeholder="Mode name — e.g. Client Redesign"
+            placeholder="Mode name - e.g. Client Redesign"
             value={name}
             onChange={(e) => setName(e.target.value)}
             autoFocus

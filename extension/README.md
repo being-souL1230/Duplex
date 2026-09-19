@@ -1,17 +1,17 @@
-# FocusFlow Browser Extension
+# Duplex Browser Extension
 
 Manifest V3 extension that observes real browser tabs, sends them to the
-FocusFlow web app's detection engine (`/api/detect`), and restores work modes
+Duplex web app's detection engine (`/api/detect`), and restores work modes
 in one click. Built browser-agnostic on purpose:
 
 ```
-FocusFlow Core                    browser adapters
+Duplex Core                    browser adapters
 ├── core/api.js  (backend calls)  ├── browser/chrome.js   Chromium
 ├── core/store.js (state)         ├── browser/firefox.js  Firefox
 └── detection = server /api/detect└── browser/index.js     picks adapter
 ```
 
-The engine never touches `chrome.*` / `browser.*` directly — every platform
+The engine never touches `chrome.*` / `browser.*` directly - every platform
 quirk lives in one adapter file.
 
 ## Browser compatibility
@@ -31,15 +31,15 @@ manifest (`browser_specific_settings.gecko`) and its background entry
 ## Setup (load unpacked)
 
 1. Run the web app: `npm run dev` → http://localhost:3000
-2. Sign in at http://localhost:3000/login (demo: `demo@focusflow.dev` / `demo1234`)
+2. Sign in at http://localhost:3000/login (demo: `demo@duplex.dev` / `demo1234`)
 3. Open `chrome://extensions` (or `about:debugging#/runtime/this-firefox`)
 4. Enable **Developer mode** (top right)
 5. Click **Load unpacked** → select this `extension/` folder (Chromium)
-   — for Firefox, zip the folder with `manifest.firefox.json` renamed to
+   - for Firefox, zip the folder with `manifest.firefox.json` renamed to
    `manifest.json`, or use Debug Add-ons → Load Temporary Add-on
-6. Pin FocusFlow to the toolbar
+6. Pin Duplex to the toolbar
 
-The extension reuses the web app's `ff_session` cookie (needs the `cookies`
+The extension reuses the web app's `dx_session` cookie (needs the `cookies`
 permission + `host_permissions` for localhost), so there is no separate login.
 
 ## What it does
@@ -47,8 +47,9 @@ permission + `host_permissions` for localhost), so there is no separate login.
 | Piece | File | Role (doc §6.1) |
 |---|---|---|
 | Service worker | `background/service-worker.js` | Tab listeners, debounced auto-detect, badge, restore |
-| API client | `lib/api.js` | `/api/detect`, `/api/modes`, activate, respond |
-| Local state | `lib/local-store.js` | Signal buffer, debouncer, last suggestion |
+| API client | `core/api.js` | `/api/detect`, `/api/modes`, activate, respond |
+| Local state | `core/store.js` | Signal buffer, debouncer, last suggestion |
+| Browser adapter | `browser/*` | `BrowserAdapter` interface: `chrome.js` (Chromium), `firefox.js` (Firefox), `index.js` (selector) |
 | Popup | `popup/*` | Current context card, reasons, accept/ignore, saved modes |
 
 ### Flow

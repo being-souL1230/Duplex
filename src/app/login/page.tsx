@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 
 const ERROR_MESSAGES: Record<string, string> = {
   google_unconfigured: "Google sign-in is not configured on this server",
-  google_failed: "Google sign-in failed — please try again",
-  google_state: "Sign-in session expired — please try again",
+  google_failed: "Google sign-in failed - please try again",
+  google_state: "Sign-in session expired - please try again",
   google_unverified: "Your Google email is not verified",
 };
 

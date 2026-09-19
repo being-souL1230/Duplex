@@ -3,7 +3,7 @@ import { db } from "@/db";
 import { detectionEvents } from "@/db/schema";
 
 /**
- * Cooldown — doc test matrix: "User clicks Ignore → Suppress repeated
+ * Cooldown - doc test matrix: "User clicks Ignore → Suppress repeated
  * immediate suggestion". When a cluster is ignored we stop re-proposing
  * it for a while so the product never nags.
  */

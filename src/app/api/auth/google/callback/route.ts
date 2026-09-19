@@ -10,8 +10,8 @@ export const dynamic = "force-dynamic";
 /**
  * GET /api/auth/google/callback
  * Verifies state, upserts the user (first Google login creates the row),
- * then starts a FocusFlow session and redirects to the dashboard.
- * Google users get a random unusable password hash — they sign in via Google.
+ * then starts a Duplex session and redirects to the dashboard.
+ * Google users get a random unusable password hash - they sign in via Google.
  */
 export async function GET(request: Request) {
   if (!googleConfigured()) {
@@ -27,8 +27,8 @@ export async function GET(request: Request) {
 
   /* CSRF check: query-param state must match the cookie we set. */
   const store = await cookies();
-  const cookieState = store.get("ff_oauth_state")?.value;
-  store.delete("ff_oauth_state");
+  const cookieState = store.get("dx_oauth_state")?.value;
+  store.delete("dx_oauth_state");
   if (!cookieState || cookieState !== state || !verifyState(state)) {
     return Response.redirect(new URL("/login?error=google_state", request.url), 302);
   }
@@ -58,7 +58,7 @@ export async function GET(request: Request) {
       .values({
         email,
         name,
-        /* 32 random bytes hex — nobody knows it; Google owns this identity. */
+        /* 32 random bytes hex - nobody knows it; Google owns this identity. */
         passwordHash: hashPassword(
           Buffer.from(
             `${email}|${profile.sub}|${process.env.GOOGLE_CLIENT_SECRET ?? "x"}`,

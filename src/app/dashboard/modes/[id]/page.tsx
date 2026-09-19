@@ -7,7 +7,7 @@ import type { ModeDTO } from "@/lib/types";
 
 export const dynamic = "force-dynamic";
 
-/** UUIDs only — optimistic UI ids like `temp-…` never reach the database. */
+/** UUIDs only - optimistic UI ids like `temp-…` never reach the database. */
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 export default async function ModePage({

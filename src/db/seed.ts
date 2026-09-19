@@ -11,7 +11,7 @@ import {
 import { hashPassword } from "@/lib/auth";
 import { normalizeHostname, titleHash, urlPattern } from "@/lib/detection/signals";
 
-export const DEMO_EMAIL = "demo@focusflow.dev";
+export const DEMO_EMAIL = "demo@duplex.dev";
 export const DEMO_PASSWORD = "demo1234";
 
 const HOUR = 1000 * 60 * 60;
@@ -30,7 +30,7 @@ type SeedMode = {
 const SEED_MODES: SeedMode[] = [
   {
     name: "College Project",
-    description: "Campus Connect — final year build with the team.",
+    description: "Campus Connect - final year build with the team.",
     icon: "◒",
     useCount: 14,
     lastUsedHoursAgo: 3,
@@ -44,7 +44,7 @@ const SEED_MODES: SeedMode[] = [
   },
   {
     name: "Freelance Client",
-    description: "Retainer work for Northwind — invoices, builds, handoff.",
+    description: "Retainer work for Northwind - invoices, builds, handoff.",
     icon: "◓",
     useCount: 9,
     lastUsedHoursAgo: 26,
@@ -71,13 +71,13 @@ const SEED_MODES: SeedMode[] = [
   },
   {
     name: "Hackathon",
-    description: "Hack Devengers 2.0 — 24 hour sprint workspace.",
+    description: "Hack Devengers 2.0 - 24 hour sprint workspace.",
     icon: "◔",
     useCount: 4,
     lastUsedHoursAgo: 8,
     links: [
       { title: "Devengers submission", url: "https://devpost.com/hack-devengers/submission" },
-      { title: "focusflow · main", url: "https://github.com/focusflow/focusflow" },
+      { title: "duplex · main", url: "https://github.com/duplex/duplex" },
       { title: "Pitch deck", url: "https://docs.google.com/presentation/d/pitch" },
       { title: "Local build", url: "http://localhost:5173/" },
     ],
@@ -148,7 +148,7 @@ const SEED_DETECTIONS: {
     hoursAgo: 9,
     reasons: [
       "github.com, devpost.com already saved in Hackathon (+35)",
-      "Title keywords match: focusflow, devengers (+12)",
+      "Title keywords match: duplex, devengers (+12)",
     ],
     hostnames: ["github.com", "devpost.com", "localhost"],
   },

@@ -44,7 +44,7 @@ export default async function SessionsPage() {
           muted
         />
         <div className="max-w-[16rem] text-xs leading-relaxed text-muted">
-          A session with many switches is the signal FocusFlow was built to kill. Fewer
+          A session with many switches is the signal Duplex was built to kill. Fewer
           jumps, longer blocks, same work.
         </div>
       </section>

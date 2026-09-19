@@ -89,9 +89,9 @@ export function ModeDetail({ mode: initial }: { mode: ModeDTO }) {
     if (opened === valid && valid > 0) {
       setStatus(`${opened} opened`);
     } else if (opened === 0) {
-      setStatus(valid === 0 ? "No valid links to open" : "Pop-ups blocked — allow them for this site");
+      setStatus(valid === 0 ? "No valid links to open" : "Pop-ups blocked - allow them for this site");
     } else {
-      setStatus(`${opened}/${valid} opened — allow pop-ups for all`);
+      setStatus(`${opened}/${valid} opened - allow pop-ups for all`);
     }
   }
 
@@ -105,7 +105,7 @@ export function ModeDetail({ mode: initial }: { mode: ModeDTO }) {
     });
     if (!res.ok) {
       setBusy(false);
-      setStatus("Restore failed — try again");
+      setStatus("Restore failed - try again");
       return;
     }
     const data = (await res.json()) as {
@@ -113,7 +113,7 @@ export function ModeDetail({ mode: initial }: { mode: ModeDTO }) {
       skipped: number;
     };
 
-    /* Actually open the workspace — first tab focused, rest behind it. */
+    /* Actually open the workspace - first tab focused, rest behind it. */
     let blocked = 0;
     data.opened.forEach((link, i) => {
       const win = window.open(link.url, i === 0 ? "_blank" : "_blank", "noopener,noreferrer");
@@ -124,7 +124,7 @@ export function ModeDetail({ mode: initial }: { mode: ModeDTO }) {
     setOpened(data.opened);
     setMode((m) => ({ ...m, useCount: m.useCount + 1, lastUsedAt: new Date().toISOString() }));
     if (blocked > 0) {
-      setStatus("Pop-ups blocked — allow them for this site to open tabs");
+      setStatus("Pop-ups blocked - allow them for this site to open tabs");
     } else {
       setStatus(
         data.skipped > 0
@@ -285,7 +285,7 @@ export function ModeDetail({ mode: initial }: { mode: ModeDTO }) {
                 ◌
               </span>
               <p className="mt-4 text-xs text-muted">
-                No resources yet — add the first URL below.
+                No resources yet - add the first URL below.
               </p>
             </li>
           ) : null}

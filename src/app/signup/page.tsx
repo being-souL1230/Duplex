@@ -13,7 +13,7 @@ export default async function SignupPage() {
   return (
     <AuthShell
       title="Create your space"
-      subtitle="Start clean — create your first work mode and let detection learn from there. Detection never acts without asking."
+      subtitle="Start clean - create your first work mode and let detection learn from there. Detection never acts without asking."
     >
       <AuthForm mode="signup" googleEnabled={googleConfigured()} />
       <p className="mt-5 text-center text-xs text-muted">

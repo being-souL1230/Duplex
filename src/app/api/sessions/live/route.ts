@@ -3,7 +3,7 @@ import { closeLiveSessions, getLiveSession } from "@/lib/sessions";
 
 export const dynamic = "force-dynamic";
 
-/** Live session status — the extension pings this to decide whether to end. */
+/** Live session status - the extension pings this to decide whether to end. */
 export async function GET() {
   const user = await getCurrentUser();
   if (!user) return unauthorized();

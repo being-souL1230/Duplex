@@ -1,18 +1,18 @@
 /**
- * FirefoxAdapter — Firefox uses the `browser.*` namespace with promise-based
+ * FirefoxAdapter - Firefox uses the `browser.*` namespace with promise-based
  * WebExtensions APIs. Differences from Chromium handled here:
  *
  * 1. `browser.action` (same as chrome.action in FF ≥109).
  * 2. No `chrome.storage.session` in older versions → use storage.local.
- * 3. `windows.getLastFocused({populate})` — same, but returns promises
+ * 3. `windows.getLastFocused({populate})` - same, but returns promises
  *    natively (no callback form needed).
  * 4. `runtime.onSuspend` does not fire reliably → alarms reconcile instead.
  * 5. `idle.setDetectionInterval` exists; idle events work the same.
  */
 
-import { WEB_APP_URL } from "../lib/constants.js";
+import { WEB_APP_URL } from "../core/constants.js";
 
-const META_KEY = "ff_tab_meta";
+const META_KEY = "dx_tab_meta";
 let tabMeta = null;
 
 /** Firefox global `browser` namespace (declared by the runtime). */
@@ -86,7 +86,7 @@ export const FirefoxAdapter = {
 
   async isLoggedIn() {
     try {
-      const cookie = await api.cookies.get({ url: WEB_APP_URL, name: "ff_session" });
+      const cookie = await api.cookies.get({ url: WEB_APP_URL, name: "dx_session" });
       return Boolean(cookie?.value);
     } catch {
       return false;
@@ -112,7 +112,7 @@ export const FirefoxAdapter = {
   },
 
   async onShutdownSync(fn) {
-    /* Not fired reliably in Firefox — the periodic alarm reconciles instead. */
+    /* Not fired reliably in Firefox - the periodic alarm reconciles instead. */
     if (api.runtime.onSuspend) api.runtime.onSuspend.addListener(fn);
   },
 
