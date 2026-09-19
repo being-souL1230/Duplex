@@ -2,10 +2,22 @@
  * All chrome.* and browser.* access goes through the BrowserAdapter
  * (see browser/index.js). The detection engine itself lives server-side
  * at /api/detect - the extension is a signal collector + suggester.
+ *
+ * Resilience rules (why this file looks defensive):
+ *  - Transient detect failures (network down, 5xx) retry in-place with
+ *    linear backoff, then park auto-detection in a persisted backoff so
+ *    a dead server never gets hammered every 12s.
+ *  - Non-transient failures (401, 400/404) never retry.
+ *  - Every warning is logged once per SW lifetime: MV3 restarts the SW
+ *    constantly, and repeating identical warnings is pure noise.
+ *  - Accept paths are all-or-nothing: a mode is never half-opened, and
+ *    the suggestion survives so the user can retry.
+ *  - Per-tab failures during restore are skipped without losing the rest.
  */
 
 import { getBrowser } from "../browser/index.js";
 import {
+  ApiError,
   detect,
   getModes,
   createMode,
@@ -13,6 +25,7 @@ import {
   respondToDetection,
   getLiveSession,
   endLiveSession,
+  isTransient,
 } from "../core/api.js";
 import {
   appendSignals,
@@ -22,6 +35,9 @@ import {
   getSuggestion,
   setLiveSessionId,
   getLiveSessionId,
+  recordDetectFailure,
+  clearDetectBackoff,
+  getDetectBackoffRemaining,
   DEBOUNCE_MS,
 } from "../core/store.js";
 
@@ -29,6 +45,30 @@ const B = getBrowser();
 
 const IDLE_SECONDS = 15 * 60; /* user idle this long -> session ends */
 const END_PING_ALARM = "dx_end_ping";
+
+const DETECT_RETRIES = 2; /* 1 initial try + 2 retries = 3 attempts */
+const DETECT_RETRY_BASE_MS = 2_000; /* 2s, 4s between in-place retries */
+const LOG_THROTTLE_MS = 60 * 60 * 1000; /* same warning again after 1h */
+
+/* ------------------------------------------------------------------ */
+/* Logging - warn once per message per SW lifetime                      */
+/* ------------------------------------------------------------------ */
+
+const warned = new Map();
+
+/**
+ * MV3 kills and restarts the service worker all the time, so repeated
+ * warnings from a long-running problem (e.g. web app not running) would
+ * flood the SW console. Log each message once, then stay quiet for an
+ * hour before reminding once.
+ */
+function warnOnce(message, ...details) {
+  const now = Date.now();
+  const last = warned.get(message) ?? 0;
+  if (now - last < LOG_THROTTLE_MS) return;
+  warned.set(message, now);
+  console.warn(`[Duplex] ${message}`, ...details);
+}
 
 /* ------------------------------------------------------------------ */
 /* Badge                                                               */
@@ -46,6 +86,71 @@ async function setBadge(hasSuggestion) {
 /* Detection                                                           */
 /* ------------------------------------------------------------------ */
 
+/**
+ * One POST /api/detect with in-place retries for transient failures.
+ * Backoff between retries: DETECT_RETRY_BASE_MS * attempt (2s, 4s).
+ * Non-transient errors (AUTH_REQUIRED, HTTP 4xx) rethrow immediately.
+ *
+ * @returns the detect response
+ * @throws the last error after all attempts are exhausted
+ */
+async function detectWithRetry(tabs) {
+  let lastError = null;
+  for (let attempt = 0; attempt <= DETECT_RETRIES; attempt += 1) {
+    if (attempt > 0) {
+      await new Promise((resolve) => setTimeout(resolve, DETECT_RETRY_BASE_MS * attempt));
+    }
+    try {
+      return await detect(tabs);
+    } catch (err) {
+      lastError = err;
+      if (!isTransient(err)) throw err;
+      warnOnce(
+        `detect attempt ${attempt + 1}/${DETECT_RETRIES + 1} failed (${err.message}) - retrying…`,
+      );
+    }
+  }
+  throw lastError;
+}
+
+/**
+ * Give auto-detection a rest after a failure so a stopped web app does
+ * not get probed every debounce tick. The backoff state persists in
+ * storage, so SW restarts do not reset it.
+ *
+ * @returns true when detection may proceed
+ */
+async function shouldAutoDetect() {
+  const remainingMs = await getDetectBackoffRemaining();
+  if (remainingMs > 0) return false;
+  try {
+    if (!(await B.isLoggedIn())) return false;
+  } catch {
+    return false; /* cookie API failed - assume logged out, retry later */
+  }
+  return true;
+}
+
+/** Record a failed auto-detect and log how long detection is parked. */
+async function noteAutoDetectFailure(err) {
+  const { failCount, delayMs } = await recordDetectFailure();
+  const seconds = Math.round(delayMs / 1000);
+  if (err instanceof ApiError) {
+    warnOnce(
+      `detect failed ${failCount}x (${err.code}: ${err.message}) - auto-detect paused ${seconds}s`,
+    );
+  } else {
+    warnOnce(`detect failed ${failCount}x (${err.message}) - auto-detect paused ${seconds}s`);
+  }
+}
+
+/** Clear backoff + badge on a definitive "no suggestion" answer. */
+async function resetObservationState() {
+  await clearDetectBackoff();
+  await clearSuggestion();
+  await setBadge(false);
+}
+
 async function runDetection({ notifyBadge = true } = {}) {
   if (!(await B.isLoggedIn())) return null;
 
@@ -54,9 +159,20 @@ async function runDetection({ notifyBadge = true } = {}) {
 
   await appendSignals(tabs);
 
-  const data = await detect(tabs);
+  let data;
+  try {
+    data = await detectWithRetry(tabs);
+  } catch (err) {
+    if (err?.code === "AUTH_REQUIRED") throw err;
+    await noteAutoDetectFailure(err);
+    throw err;
+  }
+
+  /* A clean answer means the server is healthy again. */
+  await clearDetectBackoff();
+
   if (data.disabled || !data.result?.candidate) {
-    await clearSuggestion();
+    await resetObservationState();
     if (notifyBadge) await setBadge(false);
     return data;
   }
@@ -87,6 +203,30 @@ async function runDetection({ notifyBadge = true } = {}) {
 /* Restore                                                             */
 /* ------------------------------------------------------------------ */
 
+/**
+ * Open tabs with a small gap: the browser's window lookup can race a
+ * freshly focused window, and hammering tabs.create all at once can drop
+ * tabs. A failed tab is skipped (and logged) instead of losing the rest.
+ */
+async function openTabsSequentially(opened) {
+  const results = [];
+  for (let i = 0; i < opened.length; i += 1) {
+    const url = opened[i]?.url;
+    if (!url) {
+      warnOnce("mode link without url skipped during restore");
+      continue;
+    }
+    if (i > 0) await new Promise((resolve) => setTimeout(resolve, 120));
+    try {
+      await B.createTab(url, i === 0);
+      results.push(url);
+    } catch (err) {
+      warnOnce(`could not open tab ${url}`, err?.message);
+    }
+  }
+  return results;
+}
+
 async function restoreMode(modeId, source) {
   const data = await activateMode(modeId, source);
 
@@ -95,11 +235,8 @@ async function restoreMode(modeId, source) {
     await setLiveSessionId(data.session.id);
   }
 
-  const opened = data.opened ?? [];
-  for (let i = 0; i < opened.length; i += 1) {
-    await B.createTab(opened[i].url, i === 0);
-  }
-  return data;
+  const openedUrls = await openTabsSequentially(data.opened ?? []);
+  return { ...data, opened: openedUrls };
 }
 
 /* ------------------------------------------------------------------ */
@@ -116,7 +253,7 @@ async function autoEndSession(reason) {
     }
   } catch (err) {
     if (err.code !== "AUTH_REQUIRED") {
-      console.warn("[Duplex] autoEnd failed:", err.message);
+      warnOnce(`autoEnd failed (${reason})`, err.message);
     }
   }
 }
@@ -135,7 +272,7 @@ async function reconcileSession() {
       await endLiveSession(); /* stale live session from an old run */
     }
   } catch (err) {
-    if (err.code !== "AUTH_REQUIRED") console.warn("[Duplex] reconcile failed:", err.message);
+    if (err.code !== "AUTH_REQUIRED") warnOnce("reconcile failed", err.message);
   }
 }
 
@@ -163,10 +300,13 @@ B.onStartup(() => {
 /* ------------------------------------------------------------------ */
 
 function scheduleAutoDetect() {
-  B.scheduleDebounced(() => {
-    runDetection().catch((err) => {
-      if (err.code !== "AUTH_REQUIRED") console.warn("[Duplex] detect failed:", err.message);
-    });
+  B.scheduleDebounced(async () => {
+    if (!(await shouldAutoDetect())) return;
+    try {
+      await runDetection();
+    } catch (err) {
+      /* Failure (and its backoff) was already recorded in runDetection. */
+    }
   }, DEBOUNCE_MS);
 }
 
@@ -238,6 +378,8 @@ async function handleMessage(message = {}) {
       }
       if (!modeId) throw new Error("NO_MODE");
 
+      /* All-or-nothing: activate + open tabs before clearing the
+       * suggestion, so a failed restore leaves the card retryable. */
       const restored = await restoreMode(modeId, "detected");
       await clearSuggestion();
       await setBadge(false);
@@ -252,7 +394,13 @@ async function handleMessage(message = {}) {
     case "IGNORE": {
       const suggestion = await getSuggestion();
       const eventId = message.eventId ?? suggestion?.eventId;
-      if (eventId) await respondToDetection(eventId, false);
+      if (eventId) {
+        /* Ignore must always clear local state; a server failure here
+         * should not leave a dead suggestion stuck in the popup. */
+        await respondToDetection(eventId, false).catch((err) => {
+          if (err.code !== "AUTH_REQUIRED") warnOnce("ignore response not recorded", err.message);
+        });
+      }
       await clearSuggestion();
       await setBadge(false);
       await clearBuffer();

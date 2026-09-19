@@ -166,7 +166,10 @@ async function runDetection() {
       show("view-idle");
     }
   } catch (err) {
-    setStatus(err.message === "AUTH_REQUIRED" ? "Please sign in first" : "Detection failed");
+    if (err.message === "AUTH_REQUIRED") setStatus("Please sign in first");
+    else if (err.message === "NETWORK" || err.message === "SERVER") {
+      setStatus("Web app not reachable - auto-detect will retry");
+    } else setStatus("Detection failed");
     show("view-idle");
   }
 }
@@ -190,7 +193,10 @@ async function acceptSuggestion() {
     clearCurrentSuggestion();
     renderModes(await loadModes());
   } catch (err) {
-    setStatus(err.message === "NO_MODE" ? "No mode to switch to" : "Could not switch context");
+    if (err.message === "NO_MODE") setStatus("No mode to switch to");
+    else if (err.message === "NETWORK" || err.message === "SERVER") {
+      setStatus("Web app not reachable - try again in a moment");
+    } else setStatus("Could not switch context");
   }
   $("btn-accept").disabled = false;
 }

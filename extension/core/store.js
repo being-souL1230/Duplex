@@ -7,6 +7,7 @@
 const BUFFER_KEY = "dx_signal_buffer";
 const SUGGESTION_KEY = "dx_last_suggestion";
 const LIVE_SESSION_KEY = "dx_live_session_id";
+const BACKOFF_KEY = "dx_detect_backoff";
 
 const area = (globalThis.browser ?? globalThis.chrome).storage.local;
 
@@ -56,4 +57,37 @@ export async function getSuggestion() {
 
 export async function clearSuggestion() {
   await area.remove(SUGGESTION_KEY);
+}
+
+/* ------------------------------------------------------------------ */
+/* Detect backoff - survives service-worker restarts                    */
+/*                                                                      */
+/* A failed background detect must not hammer the server: after a       */
+/* transient failure the next auto-detect waits failCount * DEBOUNCE_MS */
+/* (capped), then resets. User-triggered detects bypass this entirely.  */
+/* ------------------------------------------------------------------ */
+
+const MAX_BACKOFF_MULTIPLIER = 10; /* cap: 10 x 12s = 2 min */
+
+export function nextBackoffDelayMs(previousFailures, baseMs = DEBOUNCE_MS) {
+  return Math.min((previousFailures + 1) * baseMs, MAX_BACKOFF_MULTIPLIER * baseMs);
+}
+
+export async function recordDetectFailure() {
+  const { [BACKOFF_KEY]: backoff } = await area.get(BACKOFF_KEY);
+  const failCount = (backoff?.failCount ?? 0) + 1;
+  const delayMs = nextBackoffDelayMs(backoff?.failCount ?? 0);
+  await area.set({ [BACKOFF_KEY]: { failCount, delayMs, at: Date.now() } });
+  return { failCount, delayMs };
+}
+
+export async function clearDetectBackoff() {
+  await area.remove(BACKOFF_KEY);
+}
+
+/** Returns 0 when auto-detect may run, otherwise ms to wait. */
+export async function getDetectBackoffRemaining() {
+  const { [BACKOFF_KEY]: backoff } = await area.get(BACKOFF_KEY);
+  if (!backoff?.delayMs) return 0;
+  return Math.max(0, backoff.delayMs - (Date.now() - backoff.at));
 }
