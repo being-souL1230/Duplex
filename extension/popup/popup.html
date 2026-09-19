@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FocusFlow</title>
+    <link rel="stylesheet" href="popup.css" />
+  </head>
+  <body>
+    <!-- header -->
+    <header>
+      <div class="brand">
+        <span class="dot"></span>
+        FocusFlow
+      </div>
+      <span id="observe-state" class="observe">
+        <span class="observe-dot"></span> observing
+      </span>
+    </header>
+
+    <!-- logged out -->
+    <section id="view-auth" class="view hidden">
+      <p class="muted">
+        Sign in to the FocusFlow web app first — the extension uses the same
+        session.
+      </p>
+      <a id="btn-login" class="btn btn-solid" target="_blank" rel="noreferrer">Open sign in</a>
+    </section>
+
+    <!-- idle -->
+    <section id="view-idle" class="view hidden">
+      <div class="tabs-line">
+        <span id="tab-count" class="mono">0 tabs</span>
+        <span class="muted">observing this window</span>
+      </div>
+      <button id="btn-detect" class="btn btn-solid">Run detection</button>
+      <p class="hint">
+        Reads hostname, title words and timing — never page content.
+      </p>
+    </section>
+
+    <!-- scanning -->
+    <section id="view-scanning" class="view hidden">
+      <div class="spinner"></div>
+      <p class="muted center">Clustering tabs, scoring against your modes…</p>
+    </section>
+
+    <!-- suggestion -->
+    <section id="view-suggestion" class="view hidden">
+      <div class="score-row">
+        <div class="score" id="sug-score">0</div>
+        <div>
+          <p class="muted small" id="sug-kind">Looks like you're in</p>
+          <p class="label" id="sug-label">—</p>
+        </div>
+      </div>
+
+      <div id="sug-rename" class="hidden">
+        <input id="sug-name" class="field" placeholder="Name this context" />
+      </div>
+
+      <ul id="sug-reasons" class="reasons"></ul>
+
+      <div class="actions">
+        <button id="btn-accept" class="btn btn-solid">Switch to this mode</button>
+        <button id="btn-ignore" class="btn">Not this context</button>
+      </div>
+
+      <p id="sug-warning" class="warning hidden"></p>
+    </section>
+
+    <!-- restored -->
+    <section id="view-restored" class="view hidden">
+      <div class="big-check">✓</div>
+      <p class="muted center" id="restored-text">Workspace rebuilt.</p>
+    </section>
+
+    <!-- saved modes -->
+    <section class="view modes">
+      <p class="section-label">Saved modes</p>
+      <ul id="modes-list" class="modes-list"></ul>
+      <div class="save-row">
+        <input id="save-name" class="field" placeholder="Save current tabs as…" />
+        <button id="btn-save-tabs" class="btn">Save</button>
+      </div>
+    </section>
+
+    <p id="status" class="status hidden"></p>
+
+    <script src="popup.js" type="module"></script>
+  </body>
+</html>
