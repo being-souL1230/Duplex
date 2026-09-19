@@ -11,7 +11,6 @@ import {
   createMode,
   activateMode,
   respondToDetection,
-  isLoggedIn,
   getLiveSession,
   endLiveSession,
 } from "../core/api.js";
@@ -48,7 +47,7 @@ async function setBadge(hasSuggestion) {
 /* ------------------------------------------------------------------ */
 
 async function runDetection({ notifyBadge = true } = {}) {
-  if (!(await isLoggedIn())) return null;
+  if (!(await B.isLoggedIn())) return null;
 
   const tabs = await B.getTabs();
   if (tabs.length === 0) return null;
@@ -109,7 +108,7 @@ async function restoreMode(modeId, source) {
 
 async function autoEndSession(reason) {
   try {
-    if (!(await isLoggedIn())) return;
+    if (!(await B.isLoggedIn())) return;
 
     const data = await endLiveSession();
     if (data.closed > 0) {
@@ -129,7 +128,7 @@ async function autoEndSession(reason) {
  */
 async function reconcileSession() {
   try {
-    if (!(await isLoggedIn())) return;
+    if (!(await B.isLoggedIn())) return;
     const knownId = await getLiveSessionId();
     const data = await getLiveSession();
     if (data.live && knownId && data.session.id !== knownId) {
@@ -207,7 +206,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
 async function handleMessage(message = {}) {
   switch (message.type) {
     case "GET_STATE": {
-      const [loggedIn, suggestion] = await Promise.all([isLoggedIn(), getSuggestion()]);
+      const [loggedIn, suggestion] = await Promise.all([B.isLoggedIn(), getSuggestion()]);
       const tabs = loggedIn ? await B.getTabs() : [];
       return { loggedIn, suggestion, tabCount: tabs.length, debounceMs: DEBOUNCE_MS };
     }

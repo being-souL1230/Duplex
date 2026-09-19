@@ -8,9 +8,8 @@
  */
 
 import { setBrowser } from "../browser/index.js";
-import { FirefoxAdapter } from "../browser/firefox.js";
 
-setBrowser(FirefoxAdapter);
+setBrowser("firefox");
 
 /* Shared worker logic runs against the pinned adapter. */
 await import("./service-worker.js");
